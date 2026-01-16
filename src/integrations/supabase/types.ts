@@ -14,7 +14,104 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      activities: {
+        Row: {
+          created_at: string | null
+          duration_days: number | null
+          id: string
+          project_id: string | null
+          start_date: string
+          status: string
+          title: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          duration_days?: number | null
+          id?: string
+          project_id?: string | null
+          start_date?: string
+          status?: string
+          title: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          duration_days?: number | null
+          id?: string
+          project_id?: string | null
+          start_date?: string
+          status?: string
+          title?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "activities_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      projects: {
+        Row: {
+          color: string
+          created_at: string | null
+          id: string
+          name: string
+          user_id: string
+        }
+        Insert: {
+          color: string
+          created_at?: string | null
+          id?: string
+          name: string
+          user_id: string
+        }
+        Update: {
+          color?: string
+          created_at?: string | null
+          id?: string
+          name?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      user_settings: {
+        Row: {
+          brand_color: string | null
+          company_name: string | null
+          created_at: string | null
+          id: string
+          language: string | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          brand_color?: string | null
+          company_name?: string | null
+          created_at?: string | null
+          id?: string
+          language?: string | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          brand_color?: string | null
+          company_name?: string | null
+          created_at?: string | null
+          id?: string
+          language?: string | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
