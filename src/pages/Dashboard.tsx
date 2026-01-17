@@ -10,10 +10,12 @@ import { CanvasColumn } from '@/components/canvas/CanvasColumn';
 import { ActivityModal } from '@/components/canvas/ActivityModal';
 import { GanttChart } from '@/components/gantt/GanttChart';
 import { ProjectsList } from '@/components/projects/ProjectsList';
+import { AIChatSidebar } from '@/components/chat/AIChatSidebar';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Language, languageNames } from '@/lib/i18n';
 import { LogOut, Layers, Globe } from 'lucide-react';
+import { getRandomAvailableColor } from '@/lib/colors';
 
 const Dashboard = () => {
   const { signOut, user } = useAuth();
@@ -35,6 +37,12 @@ const Dashboard = () => {
       createActivity.mutate(data);
     }
     setEditingActivity(null);
+  };
+
+  // AI-triggered project creation with auto-color
+  const handleAICreateProject = (name: string) => {
+    const color = getRandomAvailableColor(usedColors) || '#4A90D9';
+    createProject.mutate({ name, color });
   };
 
   return (
@@ -119,6 +127,14 @@ const Dashboard = () => {
         onSave={handleSaveActivity}
         activity={editingActivity}
         projects={projects}
+      />
+
+      {/* AI Chat Sidebar */}
+      <AIChatSidebar
+        projects={projects}
+        activities={activities}
+        onCreateProject={handleAICreateProject}
+        onMoveActivity={handleMoveActivity}
       />
     </div>
   );
