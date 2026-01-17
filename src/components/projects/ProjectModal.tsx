@@ -71,9 +71,12 @@ export const ProjectModal = ({
             <Label htmlFor="projectName">{t.projectName}</Label>
             <Input
               id="projectName"
+              type="text"
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder={t.projectName}
+              autoComplete="off"
+              autoFocus
             />
           </div>
           
