@@ -70,6 +70,15 @@ export interface Translations {
   authError: string;
   noAccount: string;
   hasAccount: string;
+  forgotPassword: string;
+  resetPassword: string;
+  resetEmailSent: string;
+  backToLogin: string;
+  newPassword: string;
+  confirmNewPassword: string;
+  passwordUpdated: string;
+  passwordMismatch: string;
+  updatePassword: string;
 }
 
 export const translations: Record<Language, Translations> = {
@@ -123,6 +132,15 @@ export const translations: Record<Language, Translations> = {
     authError: "Authentication error",
     noAccount: "Don't have an account?",
     hasAccount: "Already have an account?",
+    forgotPassword: "Forgot password?",
+    resetPassword: "Reset Password",
+    resetEmailSent: "Check your email for the reset link",
+    backToLogin: "Back to login",
+    newPassword: "New Password",
+    confirmNewPassword: "Confirm New Password",
+    passwordUpdated: "Password updated successfully!",
+    passwordMismatch: "Passwords do not match",
+    updatePassword: "Update Password",
   },
   es: {
     appName: "CanvasFlow Pro",
@@ -174,6 +192,15 @@ export const translations: Record<Language, Translations> = {
     authError: "Error de autenticación",
     noAccount: "¿No tienes cuenta?",
     hasAccount: "¿Ya tienes cuenta?",
+    forgotPassword: "¿Olvidaste tu contraseña?",
+    resetPassword: "Restablecer Contraseña",
+    resetEmailSent: "Revisa tu correo para el enlace de restablecimiento",
+    backToLogin: "Volver al inicio de sesión",
+    newPassword: "Nueva Contraseña",
+    confirmNewPassword: "Confirmar Nueva Contraseña",
+    passwordUpdated: "¡Contraseña actualizada exitosamente!",
+    passwordMismatch: "Las contraseñas no coinciden",
+    updatePassword: "Actualizar Contraseña",
   },
   de: {
     appName: "CanvasFlow Pro",
@@ -225,6 +252,15 @@ export const translations: Record<Language, Translations> = {
     authError: "Authentifizierungsfehler",
     noAccount: "Kein Konto?",
     hasAccount: "Bereits ein Konto?",
+    forgotPassword: "Passwort vergessen?",
+    resetPassword: "Passwort zurücksetzen",
+    resetEmailSent: "Überprüfen Sie Ihre E-Mail für den Reset-Link",
+    backToLogin: "Zurück zur Anmeldung",
+    newPassword: "Neues Passwort",
+    confirmNewPassword: "Neues Passwort bestätigen",
+    passwordUpdated: "Passwort erfolgreich aktualisiert!",
+    passwordMismatch: "Passwörter stimmen nicht überein",
+    updatePassword: "Passwort aktualisieren",
   },
   fr: {
     appName: "CanvasFlow Pro",
@@ -276,6 +312,15 @@ export const translations: Record<Language, Translations> = {
     authError: "Erreur d'authentification",
     noAccount: "Pas de compte?",
     hasAccount: "Déjà un compte?",
+    forgotPassword: "Mot de passe oublié?",
+    resetPassword: "Réinitialiser le mot de passe",
+    resetEmailSent: "Vérifiez votre e-mail pour le lien de réinitialisation",
+    backToLogin: "Retour à la connexion",
+    newPassword: "Nouveau mot de passe",
+    confirmNewPassword: "Confirmer le nouveau mot de passe",
+    passwordUpdated: "Mot de passe mis à jour avec succès!",
+    passwordMismatch: "Les mots de passe ne correspondent pas",
+    updatePassword: "Mettre à jour le mot de passe",
   },
   it: {
     appName: "CanvasFlow Pro",
@@ -327,6 +372,15 @@ export const translations: Record<Language, Translations> = {
     authError: "Errore di autenticazione",
     noAccount: "Non hai un account?",
     hasAccount: "Hai già un account?",
+    forgotPassword: "Password dimenticata?",
+    resetPassword: "Reimposta Password",
+    resetEmailSent: "Controlla la tua email per il link di reimpostazione",
+    backToLogin: "Torna al login",
+    newPassword: "Nuova Password",
+    confirmNewPassword: "Conferma Nuova Password",
+    passwordUpdated: "Password aggiornata con successo!",
+    passwordMismatch: "Le password non corrispondono",
+    updatePassword: "Aggiorna Password",
   },
 };
 
