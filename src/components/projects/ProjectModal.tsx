@@ -1,7 +1,7 @@
 // PROJECT: CanvasFlow Pro
 // MODULE: Project Creation/Edit Modal
 
-import { useState, useEffect } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Project } from '@/hooks/useProjects';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { getAvailableColors, projectColors } from '@/lib/colors';
@@ -37,19 +37,23 @@ export const ProjectModal = ({
   const [name, setName] = useState('');
   const [selectedColor, setSelectedColor] = useState('');
 
-  const availableColors = getAvailableColors(
-    project ? usedColors.filter(c => c !== project.color) : usedColors
-  );
+  const availableColors = useMemo(() => {
+    const blockedColors = project ? usedColors.filter(c => c !== project.color) : usedColors;
+    return getAvailableColors(blockedColors);
+  }, [project?.color, usedColors]);
 
   useEffect(() => {
+    if (!open) return;
+
     if (project) {
       setName(project.name);
       setSelectedColor(project.color);
-    } else {
-      setName('');
-      setSelectedColor(availableColors[0]?.value || '');
+      return;
     }
-  }, [project, open, availableColors]);
+
+    setName('');
+    setSelectedColor((prev) => prev || availableColors[0]?.value || '');
+  }, [open, project, availableColors]);
 
   const handleSave = () => {
     if (!name.trim() || !selectedColor) return;
@@ -58,7 +62,10 @@ export const ProjectModal = ({
   };
 
   return (
-    <Dialog open={open} onOpenChange={onClose}>
+    <Dialog open={open} onOpenChange={(nextOpen) => {
+      if (!nextOpen) onClose();
+    }}>
+
       <DialogContent>
         <DialogHeader>
           <DialogTitle>
