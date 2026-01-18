@@ -58,7 +58,7 @@ import { Project } from '@/hooks/useProjects';
 import { Activity } from '@/hooks/useActivities';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import { Bot, Send, Loader2, Mic, MicOff } from 'lucide-react';
+import { Bot, Send, Loader2, Mic, MicOff, Volume2, VolumeX } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface Message {
@@ -90,6 +90,8 @@ const chatTranslations: Record<string, {
   errorSending: string;
   listening: string;
   voiceNotSupported: string;
+  speakingEnabled: string;
+  speakingDisabled: string;
 }> = {
   en: {
     title: 'AI Assistant',
@@ -100,6 +102,8 @@ const chatTranslations: Record<string, {
     errorSending: 'Failed to send message',
     listening: 'Listening...',
     voiceNotSupported: 'Voice input not supported in this browser',
+    speakingEnabled: 'Voice output enabled',
+    speakingDisabled: 'Voice output disabled',
   },
   es: {
     title: 'Asistente IA',
@@ -110,6 +114,8 @@ const chatTranslations: Record<string, {
     errorSending: 'Error al enviar mensaje',
     listening: 'Escuchando...',
     voiceNotSupported: 'Entrada de voz no soportada en este navegador',
+    speakingEnabled: 'Salida de voz activada',
+    speakingDisabled: 'Salida de voz desactivada',
   },
   de: {
     title: 'KI-Assistent',
@@ -120,6 +126,8 @@ const chatTranslations: Record<string, {
     errorSending: 'Nachricht senden fehlgeschlagen',
     listening: 'Hören...',
     voiceNotSupported: 'Spracheingabe in diesem Browser nicht unterstützt',
+    speakingEnabled: 'Sprachausgabe aktiviert',
+    speakingDisabled: 'Sprachausgabe deaktiviert',
   },
   fr: {
     title: 'Assistant IA',
@@ -130,6 +138,8 @@ const chatTranslations: Record<string, {
     errorSending: 'Échec de l\'envoi du message',
     listening: 'Écoute...',
     voiceNotSupported: 'Entrée vocale non prise en charge dans ce navigateur',
+    speakingEnabled: 'Sortie vocale activée',
+    speakingDisabled: 'Sortie vocale désactivée',
   },
   it: {
     title: 'Assistente IA',
@@ -140,6 +150,8 @@ const chatTranslations: Record<string, {
     errorSending: 'Invio messaggio fallito',
     listening: 'Ascoltando...',
     voiceNotSupported: 'Input vocale non supportato in questo browser',
+    speakingEnabled: 'Uscita vocale attivata',
+    speakingDisabled: 'Uscita vocale disattivata',
   },
 };
 
@@ -155,6 +167,8 @@ export const AIChatSidebar = ({
   const [isLoading, setIsLoading] = useState(false);
   const [open, setOpen] = useState(false);
   const [isListening, setIsListening] = useState(false);
+  const [isSpeakingEnabled, setIsSpeakingEnabled] = useState(true);
+  const [isSpeaking, setIsSpeaking] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
   const recognitionRef = useRef<SpeechRecognition | null>(null);
 
@@ -212,6 +226,45 @@ export const AIChatSidebar = ({
     }
   };
 
+  // Text-to-Speech function
+  const speakText = (text: string) => {
+    if (!isSpeakingEnabled || !text.trim()) return;
+    
+    // Cancel any ongoing speech
+    window.speechSynthesis.cancel();
+    
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.lang = langMap[language] || 'en-US';
+    utterance.rate = 1;
+    utterance.pitch = 1;
+    
+    utterance.onstart = () => setIsSpeaking(true);
+    utterance.onend = () => setIsSpeaking(false);
+    utterance.onerror = () => setIsSpeaking(false);
+    
+    window.speechSynthesis.speak(utterance);
+  };
+
+  const stopSpeaking = () => {
+    window.speechSynthesis.cancel();
+    setIsSpeaking(false);
+  };
+
+  const toggleSpeaking = () => {
+    if (isSpeaking) {
+      stopSpeaking();
+    }
+    setIsSpeakingEnabled(!isSpeakingEnabled);
+    toast.success(!isSpeakingEnabled ? ct.speakingEnabled : ct.speakingDisabled);
+  };
+
+  // Cleanup speech on unmount
+  useEffect(() => {
+    return () => {
+      window.speechSynthesis.cancel();
+    };
+  }, []);
+
   useEffect(() => {
     if (scrollRef.current) {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
@@ -268,10 +321,11 @@ export const AIChatSidebar = ({
         handleToolCalls(choice.message.tool_calls);
       }
 
-      // Add assistant message
+      // Add assistant message and speak it
       const assistantContent = choice.message?.content || '';
       if (assistantContent) {
         setMessages((prev) => [...prev, { role: 'assistant', content: assistantContent }]);
+        speakText(assistantContent);
       }
     } catch (error) {
       console.error('Chat error:', error);
@@ -340,6 +394,18 @@ export const AIChatSidebar = ({
 
         <div className="p-4 border-t">
           <div className="flex gap-2">
+            <Button
+              onClick={toggleSpeaking}
+              size="icon"
+              variant={isSpeakingEnabled ? 'secondary' : 'outline'}
+              title={isSpeakingEnabled ? ct.speakingEnabled : ct.speakingDisabled}
+            >
+              {isSpeakingEnabled ? (
+                <Volume2 className={cn("h-4 w-4", isSpeaking && "animate-pulse text-primary")} />
+              ) : (
+                <VolumeX className="h-4 w-4" />
+              )}
+            </Button>
             <Input
               value={input}
               onChange={(e) => setInput(e.target.value)}
