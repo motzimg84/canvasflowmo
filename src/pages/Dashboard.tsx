@@ -45,6 +45,16 @@ const Dashboard = () => {
     createProject.mutate({ name, color });
   };
 
+  // AI-triggered activity creation
+  const handleAICreateActivity = (title: string, projectId?: string) => {
+    createActivity.mutate({
+      title,
+      project_id: projectId || null,
+      start_date: new Date().toISOString().split('T')[0],
+      duration_days: null,
+    });
+  };
+
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
@@ -135,6 +145,7 @@ const Dashboard = () => {
         activities={activities}
         onCreateProject={handleAICreateProject}
         onMoveActivity={handleMoveActivity}
+        onCreateActivity={handleAICreateActivity}
       />
     </div>
   );

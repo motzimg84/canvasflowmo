@@ -79,12 +79,14 @@ interface AIChatSidebarProps {
   activities: Activity[];
   onCreateProject: (name: string) => void;
   onMoveActivity: (activityId: string, status: 'todo' | 'doing' | 'finished') => void;
+  onCreateActivity: (title: string, projectId?: string) => void;
 }
 
 const chatTranslations: Record<string, {
   title: string;
   placeholder: string;
   createdProject: string;
+  createdActivity: string;
   movedActivity: string;
   switchedLanguage: string;
   errorSending: string;
@@ -97,6 +99,7 @@ const chatTranslations: Record<string, {
     title: 'AI Assistant',
     placeholder: 'Ask me anything...',
     createdProject: 'Created project:',
+    createdActivity: 'Created activity:',
     movedActivity: 'Moved activity to',
     switchedLanguage: 'Switched language to',
     errorSending: 'Failed to send message',
@@ -109,6 +112,7 @@ const chatTranslations: Record<string, {
     title: 'Asistente IA',
     placeholder: 'Pregúntame lo que quieras...',
     createdProject: 'Proyecto creado:',
+    createdActivity: 'Actividad creada:',
     movedActivity: 'Actividad movida a',
     switchedLanguage: 'Idioma cambiado a',
     errorSending: 'Error al enviar mensaje',
@@ -121,6 +125,7 @@ const chatTranslations: Record<string, {
     title: 'KI-Assistent',
     placeholder: 'Frag mich etwas...',
     createdProject: 'Projekt erstellt:',
+    createdActivity: 'Aktivität erstellt:',
     movedActivity: 'Aktivität verschoben nach',
     switchedLanguage: 'Sprache geändert zu',
     errorSending: 'Nachricht senden fehlgeschlagen',
@@ -133,6 +138,7 @@ const chatTranslations: Record<string, {
     title: 'Assistant IA',
     placeholder: 'Demandez-moi...',
     createdProject: 'Projet créé:',
+    createdActivity: 'Activité créée:',
     movedActivity: 'Activité déplacée vers',
     switchedLanguage: 'Langue changée en',
     errorSending: 'Échec de l\'envoi du message',
@@ -145,6 +151,7 @@ const chatTranslations: Record<string, {
     title: 'Assistente IA',
     placeholder: 'Chiedimi qualcosa...',
     createdProject: 'Progetto creato:',
+    createdActivity: 'Attività creata:',
     movedActivity: 'Attività spostata a',
     switchedLanguage: 'Lingua cambiata in',
     errorSending: 'Invio messaggio fallito',
@@ -160,6 +167,7 @@ export const AIChatSidebar = ({
   activities,
   onCreateProject,
   onMoveActivity,
+  onCreateActivity,
 }: AIChatSidebarProps) => {
   const { language, setLanguage } = useLanguage();
   const [messages, setMessages] = useState<Message[]>([]);
@@ -287,6 +295,10 @@ export const AIChatSidebar = ({
         case 'switch_language':
           setLanguage(args.language as Language);
           toast.success(`${ct.switchedLanguage} ${args.language}`);
+          break;
+        case 'create_activity':
+          onCreateActivity(args.title, args.project_id);
+          toast.success(`${ct.createdActivity} ${args.title}`);
           break;
       }
     }
