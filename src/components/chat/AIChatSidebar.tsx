@@ -1,6 +1,52 @@
 // PROJECT: CanvasFlow Pro
 // MODULE: AI Chat Sidebar Component
 
+// Web Speech API type declarations
+interface SpeechRecognitionEvent extends Event {
+  readonly results: SpeechRecognitionResultList;
+}
+
+interface SpeechRecognitionResultList {
+  readonly length: number;
+  item(index: number): SpeechRecognitionResult;
+  [index: number]: SpeechRecognitionResult;
+}
+
+interface SpeechRecognitionResult {
+  readonly length: number;
+  readonly isFinal: boolean;
+  item(index: number): SpeechRecognitionAlternative;
+  [index: number]: SpeechRecognitionAlternative;
+}
+
+interface SpeechRecognitionAlternative {
+  readonly transcript: string;
+  readonly confidence: number;
+}
+
+interface SpeechRecognition extends EventTarget {
+  lang: string;
+  interimResults: boolean;
+  continuous: boolean;
+  onstart: (() => void) | null;
+  onend: (() => void) | null;
+  onerror: ((event: Event) => void) | null;
+  onresult: ((event: SpeechRecognitionEvent) => void) | null;
+  start(): void;
+  stop(): void;
+}
+
+interface SpeechRecognitionConstructor {
+  new (): SpeechRecognition;
+}
+
+declare global {
+  interface Window {
+    SpeechRecognition?: SpeechRecognitionConstructor;
+    webkitSpeechRecognition?: SpeechRecognitionConstructor;
+  }
+}
+
 import { useState, useRef, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -12,7 +58,7 @@ import { Project } from '@/hooks/useProjects';
 import { Activity } from '@/hooks/useActivities';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import { Bot, Send, Loader2 } from 'lucide-react';
+import { Bot, Send, Loader2, Mic, MicOff } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface Message {
@@ -42,6 +88,8 @@ const chatTranslations: Record<string, {
   movedActivity: string;
   switchedLanguage: string;
   errorSending: string;
+  listening: string;
+  voiceNotSupported: string;
 }> = {
   en: {
     title: 'AI Assistant',
@@ -50,6 +98,8 @@ const chatTranslations: Record<string, {
     movedActivity: 'Moved activity to',
     switchedLanguage: 'Switched language to',
     errorSending: 'Failed to send message',
+    listening: 'Listening...',
+    voiceNotSupported: 'Voice input not supported in this browser',
   },
   es: {
     title: 'Asistente IA',
@@ -58,6 +108,8 @@ const chatTranslations: Record<string, {
     movedActivity: 'Actividad movida a',
     switchedLanguage: 'Idioma cambiado a',
     errorSending: 'Error al enviar mensaje',
+    listening: 'Escuchando...',
+    voiceNotSupported: 'Entrada de voz no soportada en este navegador',
   },
   de: {
     title: 'KI-Assistent',
@@ -66,6 +118,8 @@ const chatTranslations: Record<string, {
     movedActivity: 'Aktivität verschoben nach',
     switchedLanguage: 'Sprache geändert zu',
     errorSending: 'Nachricht senden fehlgeschlagen',
+    listening: 'Hören...',
+    voiceNotSupported: 'Spracheingabe in diesem Browser nicht unterstützt',
   },
   fr: {
     title: 'Assistant IA',
@@ -74,6 +128,8 @@ const chatTranslations: Record<string, {
     movedActivity: 'Activité déplacée vers',
     switchedLanguage: 'Langue changée en',
     errorSending: 'Échec de l\'envoi du message',
+    listening: 'Écoute...',
+    voiceNotSupported: 'Entrée vocale non prise en charge dans ce navigateur',
   },
   it: {
     title: 'Assistente IA',
@@ -82,6 +138,8 @@ const chatTranslations: Record<string, {
     movedActivity: 'Attività spostata a',
     switchedLanguage: 'Lingua cambiata in',
     errorSending: 'Invio messaggio fallito',
+    listening: 'Ascoltando...',
+    voiceNotSupported: 'Input vocale non supportato in questo browser',
   },
 };
 
@@ -96,9 +154,63 @@ export const AIChatSidebar = ({
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [open, setOpen] = useState(false);
+  const [isListening, setIsListening] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const recognitionRef = useRef<SpeechRecognition | null>(null);
 
   const ct = chatTranslations[language as keyof typeof chatTranslations] || chatTranslations.en;
+
+  // Language mapping for Web Speech API
+  const langMap: Record<string, string> = {
+    en: 'en-US',
+    es: 'es-ES',
+    de: 'de-DE',
+    fr: 'fr-FR',
+    it: 'it-IT',
+  };
+
+  const startListening = () => {
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SpeechRecognition) {
+      toast.error(ct.voiceNotSupported);
+      return;
+    }
+
+    const recognition = new SpeechRecognition();
+    recognition.lang = langMap[language] || 'en-US';
+    recognition.interimResults = true;
+    recognition.continuous = false;
+
+    recognition.onstart = () => setIsListening(true);
+    recognition.onend = () => setIsListening(false);
+    recognition.onerror = () => setIsListening(false);
+
+    recognition.onresult = (event: SpeechRecognitionEvent) => {
+      const transcript = Array.from(event.results)
+        .map((result) => result[0].transcript)
+        .join('');
+      setInput(transcript);
+    };
+
+    recognitionRef.current = recognition;
+    recognition.start();
+  };
+
+  const stopListening = () => {
+    if (recognitionRef.current) {
+      recognitionRef.current.stop();
+      recognitionRef.current = null;
+    }
+    setIsListening(false);
+  };
+
+  const toggleListening = () => {
+    if (isListening) {
+      stopListening();
+    } else {
+      startListening();
+    }
+  };
 
   useEffect(() => {
     if (scrollRef.current) {
@@ -232,10 +344,18 @@ export const AIChatSidebar = ({
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={handleKeyDown}
-              placeholder={ct.placeholder}
+              placeholder={isListening ? ct.listening : ct.placeholder}
               disabled={isLoading}
               className="flex-1"
             />
+            <Button
+              onClick={toggleListening}
+              disabled={isLoading}
+              size="icon"
+              variant={isListening ? 'destructive' : 'outline'}
+            >
+              {isListening ? <MicOff className="h-4 w-4" /> : <Mic className="h-4 w-4" />}
+            </Button>
             <Button onClick={sendMessage} disabled={isLoading || !input.trim()} size="icon">
               {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
             </Button>
