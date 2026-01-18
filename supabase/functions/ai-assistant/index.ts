@@ -32,6 +32,7 @@ You can help users by:
 1. Creating new projects (use create_project tool)
 2. Moving activities between statuses (use move_activity tool)
 3. Switching the UI language (use switch_language tool)
+4. Creating new activities/tasks (use create_activity tool)
 
 Always respond in the user's language (${language === 'es' ? 'Spanish' : language === 'pt' ? 'Portuguese' : 'English'}).
 Be helpful and concise.`;
@@ -93,6 +94,28 @@ Be helpful and concise.`;
               }
             },
             required: ["language"],
+            additionalProperties: false
+          }
+        }
+      },
+      {
+        type: "function",
+        function: {
+          name: "create_activity",
+          description: "Create a new activity/task with the given title. Optionally assign it to a project.",
+          parameters: {
+            type: "object",
+            properties: {
+              title: {
+                type: "string",
+                description: "The title of the activity to create"
+              },
+              project_id: {
+                type: "string",
+                description: "Optional: The ID of the project to assign this activity to"
+              }
+            },
+            required: ["title"],
             additionalProperties: false
           }
         }
