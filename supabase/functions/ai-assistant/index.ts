@@ -32,7 +32,9 @@ You can help users by:
 1. Creating new projects (use create_project tool)
 2. Moving activities between statuses (use move_activity tool)
 3. Switching the UI language (use switch_language tool)
-4. Creating new activities/tasks (use create_activity tool)
+4. Creating new activities/tasks (use create_activity tool) - When users mention a project by name, match it to the project ID from the Projects list above and use that ID
+
+IMPORTANT: When users ask to create an activity and assign it to a project by name (e.g., "assign to Project Alpha"), you MUST find the matching project from the Projects list and use its ID in the create_activity tool call.
 
 Always respond in the user's language (${language === 'es' ? 'Spanish' : language === 'pt' ? 'Portuguese' : 'English'}).
 Be helpful and concise.`;
@@ -102,7 +104,7 @@ Be helpful and concise.`;
         type: "function",
         function: {
           name: "create_activity",
-          description: "Create a new activity/task with the given title. Optionally assign it to a project.",
+          description: "Create a new activity/task with the given title. Optionally assign it to a project by providing the project's ID. When users mention a project by name, look up the ID from the provided Projects context.",
           parameters: {
             type: "object",
             properties: {
@@ -112,7 +114,7 @@ Be helpful and concise.`;
               },
               project_id: {
                 type: "string",
-                description: "Optional: The ID of the project to assign this activity to"
+                description: "The ID of the project to assign this activity to. Look up the ID from the Projects list when users reference a project by name."
               }
             },
             required: ["title"],
