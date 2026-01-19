@@ -130,15 +130,20 @@ export const GanttChart = ({ activities, projects }: GanttChartProps) => {
                 const activityStart = startOfDay(new Date(activity.start_date));
                 const today = startOfDay(new Date());
                 
-                // Auto-growth: if no duration, end = today
-                const activityEnd = activity.duration_days
+                // Calculate planned end date (original duration)
+                const plannedEnd = activity.duration_days
                   ? addDays(activityStart, activity.duration_days)
                   : today;
                 
-                const startOffset = Math.max(0, (differenceInDays(activityStart, startDate) / totalDays) * 100);
-                const width = Math.max(5, (differenceInDays(activityEnd, activityStart) / totalDays) * 100);
+                // Check if overdue: planned end has passed and still in "doing"
+                const isOverdue = activity.duration_days && today > plannedEnd;
                 
-                const isOverdue = activity.duration_days && today > activityEnd;
+                // Dynamic duration expansion: if overdue, extend visual bar to today
+                // This preserves the original start date (fixed anchoring) but expands duration visually
+                const visualEnd = isOverdue ? today : plannedEnd;
+                
+                const startOffset = Math.max(0, (differenceInDays(activityStart, startDate) / totalDays) * 100);
+                const width = Math.max(5, (differenceInDays(visualEnd, activityStart) / totalDays) * 100);
                 
                 return (
                   <div key={activity.id} className="relative h-10">
