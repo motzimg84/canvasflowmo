@@ -81,6 +81,7 @@ interface AIChatSidebarProps {
   onMoveActivity: (activityId: string, status: 'todo' | 'doing' | 'finished') => void;
   onCreateActivity: (title: string, projectId?: string) => void;
   onDeleteActivity: (activityId: string) => void;
+  onEditActivity: (activityId: string, newTitle: string) => void;
 }
 
 const chatTranslations: Record<string, {
@@ -89,6 +90,7 @@ const chatTranslations: Record<string, {
   createdProject: string;
   createdActivity: string;
   deletedActivity: string;
+  editedActivity: string;
   movedActivity: string;
   switchedLanguage: string;
   errorSending: string;
@@ -103,6 +105,7 @@ const chatTranslations: Record<string, {
     createdProject: 'Created project:',
     createdActivity: 'Created activity:',
     deletedActivity: 'Deleted activity',
+    editedActivity: 'Renamed activity to',
     movedActivity: 'Moved activity to',
     switchedLanguage: 'Switched language to',
     errorSending: 'Failed to send message',
@@ -117,6 +120,7 @@ const chatTranslations: Record<string, {
     createdProject: 'Proyecto creado:',
     createdActivity: 'Actividad creada:',
     deletedActivity: 'Actividad eliminada',
+    editedActivity: 'Actividad renombrada a',
     movedActivity: 'Actividad movida a',
     switchedLanguage: 'Idioma cambiado a',
     errorSending: 'Error al enviar mensaje',
@@ -131,6 +135,7 @@ const chatTranslations: Record<string, {
     createdProject: 'Projekt erstellt:',
     createdActivity: 'Aktivität erstellt:',
     deletedActivity: 'Aktivität gelöscht',
+    editedActivity: 'Aktivität umbenannt zu',
     movedActivity: 'Aktivität verschoben nach',
     switchedLanguage: 'Sprache geändert zu',
     errorSending: 'Nachricht senden fehlgeschlagen',
@@ -145,6 +150,7 @@ const chatTranslations: Record<string, {
     createdProject: 'Projet créé:',
     createdActivity: 'Activité créée:',
     deletedActivity: 'Activité supprimée',
+    editedActivity: 'Activité renommée en',
     movedActivity: 'Activité déplacée vers',
     switchedLanguage: 'Langue changée en',
     errorSending: 'Échec de l\'envoi du message',
@@ -159,6 +165,7 @@ const chatTranslations: Record<string, {
     createdProject: 'Progetto creato:',
     createdActivity: 'Attività creata:',
     deletedActivity: 'Attività eliminata',
+    editedActivity: 'Attività rinominata in',
     movedActivity: 'Attività spostata a',
     switchedLanguage: 'Lingua cambiata in',
     errorSending: 'Invio messaggio fallito',
@@ -176,6 +183,7 @@ export const AIChatSidebar = ({
   onMoveActivity,
   onCreateActivity,
   onDeleteActivity,
+  onEditActivity,
 }: AIChatSidebarProps) => {
   const { language, setLanguage } = useLanguage();
   const [messages, setMessages] = useState<Message[]>([]);
@@ -311,6 +319,10 @@ export const AIChatSidebar = ({
         case 'delete_activity':
           onDeleteActivity(args.activity_id);
           toast.success(ct.deletedActivity);
+          break;
+        case 'edit_activity':
+          onEditActivity(args.activity_id, args.new_title);
+          toast.success(`${ct.editedActivity} ${args.new_title}`);
           break;
       }
     }
