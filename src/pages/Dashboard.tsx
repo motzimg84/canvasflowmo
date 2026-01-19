@@ -146,6 +146,7 @@ const Dashboard = () => {
         onCreateProject={handleAICreateProject}
         onMoveActivity={handleMoveActivity}
         onCreateActivity={handleAICreateActivity}
+        onDeleteActivity={(id) => deleteActivity.mutate(id)}
       />
     </div>
   );

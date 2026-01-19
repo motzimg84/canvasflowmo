@@ -80,6 +80,7 @@ interface AIChatSidebarProps {
   onCreateProject: (name: string) => void;
   onMoveActivity: (activityId: string, status: 'todo' | 'doing' | 'finished') => void;
   onCreateActivity: (title: string, projectId?: string) => void;
+  onDeleteActivity: (activityId: string) => void;
 }
 
 const chatTranslations: Record<string, {
@@ -87,6 +88,7 @@ const chatTranslations: Record<string, {
   placeholder: string;
   createdProject: string;
   createdActivity: string;
+  deletedActivity: string;
   movedActivity: string;
   switchedLanguage: string;
   errorSending: string;
@@ -100,6 +102,7 @@ const chatTranslations: Record<string, {
     placeholder: 'Ask me anything...',
     createdProject: 'Created project:',
     createdActivity: 'Created activity:',
+    deletedActivity: 'Deleted activity',
     movedActivity: 'Moved activity to',
     switchedLanguage: 'Switched language to',
     errorSending: 'Failed to send message',
@@ -113,6 +116,7 @@ const chatTranslations: Record<string, {
     placeholder: 'Pregúntame lo que quieras...',
     createdProject: 'Proyecto creado:',
     createdActivity: 'Actividad creada:',
+    deletedActivity: 'Actividad eliminada',
     movedActivity: 'Actividad movida a',
     switchedLanguage: 'Idioma cambiado a',
     errorSending: 'Error al enviar mensaje',
@@ -126,6 +130,7 @@ const chatTranslations: Record<string, {
     placeholder: 'Frag mich etwas...',
     createdProject: 'Projekt erstellt:',
     createdActivity: 'Aktivität erstellt:',
+    deletedActivity: 'Aktivität gelöscht',
     movedActivity: 'Aktivität verschoben nach',
     switchedLanguage: 'Sprache geändert zu',
     errorSending: 'Nachricht senden fehlgeschlagen',
@@ -139,6 +144,7 @@ const chatTranslations: Record<string, {
     placeholder: 'Demandez-moi...',
     createdProject: 'Projet créé:',
     createdActivity: 'Activité créée:',
+    deletedActivity: 'Activité supprimée',
     movedActivity: 'Activité déplacée vers',
     switchedLanguage: 'Langue changée en',
     errorSending: 'Échec de l\'envoi du message',
@@ -152,6 +158,7 @@ const chatTranslations: Record<string, {
     placeholder: 'Chiedimi qualcosa...',
     createdProject: 'Progetto creato:',
     createdActivity: 'Attività creata:',
+    deletedActivity: 'Attività eliminata',
     movedActivity: 'Attività spostata a',
     switchedLanguage: 'Lingua cambiata in',
     errorSending: 'Invio messaggio fallito',
@@ -168,6 +175,7 @@ export const AIChatSidebar = ({
   onCreateProject,
   onMoveActivity,
   onCreateActivity,
+  onDeleteActivity,
 }: AIChatSidebarProps) => {
   const { language, setLanguage } = useLanguage();
   const [messages, setMessages] = useState<Message[]>([]);
@@ -299,6 +307,10 @@ export const AIChatSidebar = ({
         case 'create_activity':
           onCreateActivity(args.title, args.project_id);
           toast.success(`${ct.createdActivity} ${args.title}`);
+          break;
+        case 'delete_activity':
+          onDeleteActivity(args.activity_id);
+          toast.success(ct.deletedActivity);
           break;
       }
     }
