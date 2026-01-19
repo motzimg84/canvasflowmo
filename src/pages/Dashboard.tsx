@@ -147,6 +147,7 @@ const Dashboard = () => {
         onMoveActivity={handleMoveActivity}
         onCreateActivity={handleAICreateActivity}
         onDeleteActivity={(id) => deleteActivity.mutate(id)}
+        onEditActivity={(id, newTitle) => updateActivity.mutate({ id, title: newTitle })}
       />
     </div>
   );
