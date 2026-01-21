@@ -19,6 +19,7 @@ export type Database = {
           created_at: string | null
           duration_days: number | null
           id: string
+          progress: number | null
           project_id: string | null
           start_date: string
           status: string
@@ -30,6 +31,7 @@ export type Database = {
           created_at?: string | null
           duration_days?: number | null
           id?: string
+          progress?: number | null
           project_id?: string | null
           start_date?: string
           status?: string
@@ -41,6 +43,7 @@ export type Database = {
           created_at?: string | null
           duration_days?: number | null
           id?: string
+          progress?: number | null
           project_id?: string | null
           start_date?: string
           status?: string

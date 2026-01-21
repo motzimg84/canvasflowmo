@@ -1,5 +1,5 @@
 // PROJECT: CanvasFlow Pro
-// MODULE: Enhanced Gantt Chart Component with Grid Alignment, Scrolling & View Modes
+// MODULE: Enhanced Gantt Chart Component with Grid Alignment, Scrolling, View Modes & Progress
 
 import { useMemo, useRef, useEffect, useState } from 'react';
 import { Activity } from '@/hooks/useActivities';
@@ -8,13 +8,14 @@ import { useLanguage } from '@/contexts/LanguageContext';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
-import { differenceInDays, addDays, format, startOfDay, min, max, startOfWeek, startOfMonth, endOfWeek, endOfMonth, differenceInWeeks, differenceInMonths, addWeeks, addMonths } from 'date-fns';
+import { differenceInDays, addDays, format, startOfDay, min, max, startOfWeek, startOfMonth, endOfWeek, endOfMonth, addWeeks, addMonths } from 'date-fns';
 import { BarChart3, Calendar, CalendarDays, CalendarRange } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface GanttChartProps {
   activities: Activity[];
   projects: Project[];
+  onEditActivity?: (activity: Activity) => void;
 }
 
 type ViewMode = 'day' | 'week' | 'month';
@@ -26,8 +27,10 @@ const COLUMN_WIDTH = {
 };
 
 const LABEL_WIDTH = 140; // Fixed width for activity labels
+const BAR_HEIGHT = 24;   // Height of activity bars
+const MIN_BAR_WIDTH_FOR_TEXT = 60; // Minimum width to show text inside bar
 
-export const GanttChart = ({ activities, projects }: GanttChartProps) => {
+export const GanttChart = ({ activities, projects, onEditActivity }: GanttChartProps) => {
   const { t } = useLanguage();
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const [viewMode, setViewMode] = useState<ViewMode>('day');
@@ -174,13 +177,14 @@ export const GanttChart = ({ activities, projects }: GanttChartProps) => {
     return project?.color || 'hsl(var(--muted))';
   };
 
-  const getProjectName = (projectId: string | null) => {
-    if (!projectId) return t.privateActivity;
-    const project = projects.find(p => p.id === projectId);
-    return project?.name || t.privateActivity;
-  };
-
   const totalWidth = columns.length * COLUMN_WIDTH[viewMode];
+
+  // Handle bar click to open edit modal
+  const handleBarClick = (activity: Activity) => {
+    if (onEditActivity) {
+      onEditActivity(activity);
+    }
+  };
 
   return (
     <Card className="h-full">
@@ -308,24 +312,68 @@ export const GanttChart = ({ activities, projects }: GanttChartProps) => {
                       const barLeft = calculatePosition(activityStart, startDate, viewMode);
                       const barWidth = calculateWidth(activityStart, visualEnd, viewMode);
                       
+                      // Progress calculations
+                      const progressPercent = activity.progress || 0;
+                      const progressWidth = (progressPercent / 100) * barWidth;
+                      
+                      // Determine if text fits inside bar
+                      const showTextInside = barWidth >= MIN_BAR_WIDTH_FOR_TEXT;
+                      
                       return (
                         <div key={activity.id} className="relative h-8">
+                          {/* Main bar container */}
                           <div
                             className={cn(
-                              'gantt-bar absolute h-6 top-1 rounded flex items-center px-2 text-xs font-medium shadow-sm',
+                              'gantt-bar absolute top-1 rounded-md cursor-pointer transition-all hover:ring-2 hover:ring-primary/50 hover:ring-offset-1 overflow-hidden',
                               isOverdue && 'critical-alarm'
                             )}
                             style={{
                               left: barLeft,
                               width: barWidth,
+                              height: BAR_HEIGHT,
                               backgroundColor: getProjectColor(activity.project_id),
-                              color: '#fff',
                             }}
+                            onClick={() => handleBarClick(activity)}
+                            title={activity.title}
                           >
-                            <span className="truncate opacity-90">
-                              {getProjectName(activity.project_id)}
-                            </span>
+                            {/* Progress fill */}
+                            <div
+                              className="absolute inset-y-0 left-0 rounded-l-md transition-all"
+                              style={{
+                                width: progressWidth,
+                                backgroundColor: 'rgba(255, 255, 255, 0.35)',
+                              }}
+                            />
+                            
+                            {/* Inner progress bar with darker shade */}
+                            <div
+                              className="absolute inset-y-1 left-1 rounded transition-all"
+                              style={{
+                                width: Math.max(0, progressWidth - 8),
+                                backgroundColor: 'rgba(0, 0, 0, 0.2)',
+                              }}
+                            />
+                            
+                            {/* Activity title inside bar */}
+                            {showTextInside && (
+                              <span className="absolute inset-0 flex items-center px-2 text-xs font-medium text-white truncate z-10">
+                                {activity.title}
+                              </span>
+                            )}
                           </div>
+                          
+                          {/* Activity title outside bar (if bar is too small) */}
+                          {!showTextInside && (
+                            <span
+                              className="absolute top-1 text-xs font-medium text-foreground truncate max-w-[100px]"
+                              style={{
+                                left: barLeft + barWidth + 4,
+                                lineHeight: `${BAR_HEIGHT}px`,
+                              }}
+                            >
+                              {activity.title}
+                            </span>
+                          )}
                         </div>
                       );
                     })}
