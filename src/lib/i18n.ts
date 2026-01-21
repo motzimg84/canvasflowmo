@@ -57,6 +57,9 @@ export interface Translations {
   // Gantt
   ganttChart: string;
   noDoingActivities: string;
+  dayView: string;
+  weekView: string;
+  monthView: string;
   today: string;
   
   // AI Assistant
@@ -123,6 +126,9 @@ export const translations: Record<Language, Translations> = {
     deleteMsg: "Activity moved to finished and permanently deleted.",
     ganttChart: "Gantt Chart",
     noDoingActivities: "No activities in progress to display",
+    dayView: "Day",
+    weekView: "Week",
+    monthView: "Month",
     today: "Today",
     aiAssistant: "AI Assistant",
     askAI: "Ask AI",
@@ -183,6 +189,9 @@ export const translations: Record<Language, Translations> = {
     deleteMsg: "Actividad finalizada y eliminada permanentemente.",
     ganttChart: "Diagrama de Gantt",
     noDoingActivities: "Sin actividades en curso para mostrar",
+    dayView: "Día",
+    weekView: "Semana",
+    monthView: "Mes",
     today: "Hoy",
     aiAssistant: "Asistente IA",
     askAI: "Preguntar a IA",
@@ -243,6 +252,9 @@ export const translations: Record<Language, Translations> = {
     deleteMsg: "Aktivität abgeschlossen und dauerhaft gelöscht.",
     ganttChart: "Gantt-Diagramm",
     noDoingActivities: "Keine Aktivitäten in Arbeit anzuzeigen",
+    dayView: "Tag",
+    weekView: "Woche",
+    monthView: "Monat",
     today: "Heute",
     aiAssistant: "KI-Assistent",
     askAI: "KI fragen",
@@ -303,6 +315,9 @@ export const translations: Record<Language, Translations> = {
     deleteMsg: "Activité terminée et définitivement supprimée.",
     ganttChart: "Diagramme de Gantt",
     noDoingActivities: "Aucune activité en cours à afficher",
+    dayView: "Jour",
+    weekView: "Semaine",
+    monthView: "Mois",
     today: "Aujourd'hui",
     aiAssistant: "Assistant IA",
     askAI: "Demander à l'IA",
@@ -363,6 +378,9 @@ export const translations: Record<Language, Translations> = {
     deleteMsg: "Attività completata ed eliminata definitivamente.",
     ganttChart: "Diagramma di Gantt",
     noDoingActivities: "Nessuna attività in corso da visualizzare",
+    dayView: "Giorno",
+    weekView: "Settimana",
+    monthView: "Mese",
     today: "Oggi",
     aiAssistant: "Assistente IA",
     askAI: "Chiedi all'IA",
