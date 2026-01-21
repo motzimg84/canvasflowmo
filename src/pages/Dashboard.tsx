@@ -30,13 +30,18 @@ const Dashboard = () => {
     updateActivity.mutate({ id, status });
   };
 
-  const handleSaveActivity = (data: { title: string; project_id: string | null; start_date: string; duration_days: number | null }) => {
+  const handleSaveActivity = (data: { title: string; project_id: string | null; start_date: string; duration_days: number | null; progress: number | null }) => {
     if (editingActivity) {
       updateActivity.mutate({ id: editingActivity.id, ...data });
     } else {
       createActivity.mutate(data);
     }
     setEditingActivity(null);
+  };
+
+  const handleGanttEditActivity = (activity: Activity) => {
+    setEditingActivity(activity);
+    setActivityModalOpen(true);
   };
 
   // AI-triggered project creation with auto-color
@@ -126,7 +131,7 @@ const Dashboard = () => {
             </div>
 
             {/* Gantt */}
-            <GanttChart activities={activities} projects={projects} />
+            <GanttChart activities={activities} projects={projects} onEditActivity={handleGanttEditActivity} />
           </div>
         </div>
       </main>

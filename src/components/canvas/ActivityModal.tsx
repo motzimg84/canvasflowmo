@@ -15,6 +15,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Slider } from '@/components/ui/slider';
 import {
   Select,
   SelectContent,
@@ -32,6 +33,7 @@ interface ActivityModalProps {
     project_id: string | null;
     start_date: string;
     duration_days: number | null;
+    progress: number | null;
   }) => void;
   activity?: Activity | null;
   projects: Project[];
@@ -49,6 +51,7 @@ export const ActivityModal = ({
   const [projectId, setProjectId] = useState<string>('none');
   const [startDate, setStartDate] = useState(format(new Date(), 'yyyy-MM-dd'));
   const [durationDays, setDurationDays] = useState<string>('');
+  const [progress, setProgress] = useState<number>(0);
 
   useEffect(() => {
     if (activity) {
@@ -56,11 +59,13 @@ export const ActivityModal = ({
       setProjectId(activity.project_id || 'none');
       setStartDate(format(new Date(activity.start_date), 'yyyy-MM-dd'));
       setDurationDays(activity.duration_days?.toString() || '');
+      setProgress(activity.progress || 0);
     } else {
       setTitle('');
       setProjectId('none');
       setStartDate(format(new Date(), 'yyyy-MM-dd'));
       setDurationDays('');
+      setProgress(0);
     }
   }, [activity, open]);
 
@@ -72,6 +77,7 @@ export const ActivityModal = ({
       project_id: projectId === 'none' ? null : projectId,
       start_date: new Date(startDate).toISOString(),
       duration_days: durationDays ? parseInt(durationDays) : null,
+      progress: progress,
     });
     onClose();
   };
@@ -141,6 +147,21 @@ export const ActivityModal = ({
                 placeholder="∞"
               />
             </div>
+          </div>
+
+          {/* Progress Field */}
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <Label>{t.progress}</Label>
+              <span className="text-sm font-medium text-muted-foreground">{progress}%</span>
+            </div>
+            <Slider
+              value={[progress]}
+              onValueChange={(value) => setProgress(value[0])}
+              max={100}
+              step={5}
+              className="w-full"
+            />
           </div>
         </div>
         

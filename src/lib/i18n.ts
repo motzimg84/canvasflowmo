@@ -42,6 +42,7 @@ export interface Translations {
   moveToTodo: string;
   moveToDoing: string;
   moveToFinished: string;
+  progress: string;
   
   // Settings
   settings: string;
@@ -117,6 +118,7 @@ export const translations: Record<Language, Translations> = {
     moveToTodo: "Move to To Do",
     moveToDoing: "Move to In Progress",
     moveToFinished: "Mark as Finished",
+    progress: "Progress",
     settings: "Settings",
     companyName: "Company Name",
     brandColor: "Brand Color",
@@ -180,6 +182,7 @@ export const translations: Record<Language, Translations> = {
     moveToTodo: "Mover a Por hacer",
     moveToDoing: "Mover a En curso",
     moveToFinished: "Marcar como Finalizado",
+    progress: "Progreso",
     settings: "Configuración",
     companyName: "Nombre de la Empresa",
     brandColor: "Color de Marca",
@@ -243,6 +246,7 @@ export const translations: Record<Language, Translations> = {
     moveToTodo: "Zu erledigen verschieben",
     moveToDoing: "In Arbeit verschieben",
     moveToFinished: "Als abgeschlossen markieren",
+    progress: "Fortschritt",
     settings: "Einstellungen",
     companyName: "Firmenname",
     brandColor: "Markenfarbe",
@@ -306,6 +310,7 @@ export const translations: Record<Language, Translations> = {
     moveToTodo: "Déplacer vers À faire",
     moveToDoing: "Déplacer vers En cours",
     moveToFinished: "Marquer comme terminé",
+    progress: "Progression",
     settings: "Paramètres",
     companyName: "Nom de l'entreprise",
     brandColor: "Couleur de marque",
@@ -369,6 +374,7 @@ export const translations: Record<Language, Translations> = {
     moveToTodo: "Sposta in Da fare",
     moveToDoing: "Sposta in In corso",
     moveToFinished: "Segna come Completato",
+    progress: "Progresso",
     settings: "Impostazioni",
     companyName: "Nome Azienda",
     brandColor: "Colore Brand",
