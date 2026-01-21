@@ -1,13 +1,15 @@
 // PROJECT: CanvasFlow Pro
-// MODULE: Gantt Chart Component
+// MODULE: Enhanced Gantt Chart Component with Grid Alignment, Scrolling & View Modes
 
-import { useMemo } from 'react';
+import { useMemo, useRef, useEffect, useState } from 'react';
 import { Activity } from '@/hooks/useActivities';
 import { Project } from '@/hooks/useProjects';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { differenceInDays, addDays, format, startOfDay, min, max } from 'date-fns';
-import { BarChart3 } from 'lucide-react';
+import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
+import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
+import { differenceInDays, addDays, format, startOfDay, min, max, startOfWeek, startOfMonth, endOfWeek, endOfMonth, differenceInWeeks, differenceInMonths, addWeeks, addMonths } from 'date-fns';
+import { BarChart3, Calendar, CalendarDays, CalendarRange } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface GanttChartProps {
@@ -15,51 +17,156 @@ interface GanttChartProps {
   projects: Project[];
 }
 
+type ViewMode = 'day' | 'week' | 'month';
+
+const COLUMN_WIDTH = {
+  day: 40,    // pixels per day
+  week: 100,  // pixels per week
+  month: 120, // pixels per month
+};
+
+const LABEL_WIDTH = 140; // Fixed width for activity labels
+
 export const GanttChart = ({ activities, projects }: GanttChartProps) => {
   const { t } = useLanguage();
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const [viewMode, setViewMode] = useState<ViewMode>('day');
 
   // Only show "doing" activities (per PRD)
   const doingActivities = activities.filter(a => a.status === 'doing');
 
-  const { startDate, endDate, totalDays, todayOffset } = useMemo(() => {
+  const { startDate, endDate, totalUnits, columns, todayPosition } = useMemo(() => {
+    const today = startOfDay(new Date());
+    
     if (doingActivities.length === 0) {
-      const today = startOfDay(new Date());
+      // Default range: 2 weeks before and after today
+      const defaultStart = addDays(today, -14);
+      const defaultEnd = addDays(today, 14);
+      
       return {
-        startDate: today,
-        endDate: addDays(today, 14),
-        totalDays: 14,
-        todayOffset: 0,
+        startDate: defaultStart,
+        endDate: defaultEnd,
+        totalUnits: 28,
+        columns: generateColumns(defaultStart, defaultEnd, viewMode),
+        todayPosition: 14 * COLUMN_WIDTH[viewMode],
       };
     }
 
-    const today = startOfDay(new Date());
-    
     // Calculate date range from activities
     const allDates = doingActivities.flatMap(activity => {
       const start = startOfDay(new Date(activity.start_date));
-      // Auto-growth rule: if no duration, end = today
-      const end = activity.duration_days 
+      const plannedEnd = activity.duration_days
         ? addDays(start, activity.duration_days)
         : today;
-      return [start, end];
+      const isOverdue = activity.duration_days && today > plannedEnd;
+      const visualEnd = isOverdue ? today : plannedEnd;
+      return [start, visualEnd];
     });
 
     const minDate = min([...allDates, today]);
-    const maxDate = max([...allDates, addDays(today, 7)]);
+    const maxDate = max([...allDates, addDays(today, 14)]);
     
-    // Add padding
-    const chartStart = addDays(minDate, -2);
-    const chartEnd = addDays(maxDate, 2);
-    const days = differenceInDays(chartEnd, chartStart);
-    const todayPos = differenceInDays(today, chartStart);
+    // Add padding based on view mode
+    let chartStart: Date;
+    let chartEnd: Date;
+    
+    switch (viewMode) {
+      case 'week':
+        chartStart = startOfWeek(addDays(minDate, -7), { weekStartsOn: 1 });
+        chartEnd = endOfWeek(addDays(maxDate, 7), { weekStartsOn: 1 });
+        break;
+      case 'month':
+        chartStart = startOfMonth(addMonths(minDate, -1));
+        chartEnd = endOfMonth(addMonths(maxDate, 1));
+        break;
+      default: // day
+        chartStart = addDays(minDate, -7);
+        chartEnd = addDays(maxDate, 7);
+    }
+
+    const cols = generateColumns(chartStart, chartEnd, viewMode);
+    const todayPos = calculatePosition(today, chartStart, viewMode);
 
     return {
       startDate: chartStart,
       endDate: chartEnd,
-      totalDays: days,
-      todayOffset: (todayPos / days) * 100,
+      totalUnits: cols.length,
+      columns: cols,
+      todayPosition: todayPos,
     };
-  }, [doingActivities]);
+  }, [doingActivities, viewMode]);
+
+  // Generate columns based on view mode
+  function generateColumns(start: Date, end: Date, mode: ViewMode): { date: Date; label: string; subLabel?: string }[] {
+    const cols: { date: Date; label: string; subLabel?: string }[] = [];
+    let current = start;
+
+    while (current <= end) {
+      switch (mode) {
+        case 'day':
+          cols.push({
+            date: current,
+            label: format(current, 'd'),
+            subLabel: format(current, 'EEE'),
+          });
+          current = addDays(current, 1);
+          break;
+        case 'week':
+          cols.push({
+            date: current,
+            label: `W${format(current, 'w')}`,
+            subLabel: format(current, 'MMM d'),
+          });
+          current = addWeeks(current, 1);
+          break;
+        case 'month':
+          cols.push({
+            date: current,
+            label: format(current, 'MMM'),
+            subLabel: format(current, 'yyyy'),
+          });
+          current = addMonths(current, 1);
+          break;
+      }
+    }
+    return cols;
+  }
+
+  // Calculate pixel position for a date
+  function calculatePosition(date: Date, chartStart: Date, mode: ViewMode): number {
+    const days = differenceInDays(date, chartStart);
+    switch (mode) {
+      case 'week':
+        return (days / 7) * COLUMN_WIDTH.week;
+      case 'month':
+        return (days / 30) * COLUMN_WIDTH.month;
+      default: // day
+        return days * COLUMN_WIDTH.day;
+    }
+  }
+
+  // Calculate bar width for duration
+  function calculateWidth(startDate: Date, endDate: Date, mode: ViewMode): number {
+    const days = Math.max(1, differenceInDays(endDate, startDate));
+    switch (mode) {
+      case 'week':
+        return Math.max(COLUMN_WIDTH.week * 0.5, (days / 7) * COLUMN_WIDTH.week);
+      case 'month':
+        return Math.max(COLUMN_WIDTH.month * 0.5, (days / 30) * COLUMN_WIDTH.month);
+      default: // day
+        return Math.max(COLUMN_WIDTH.day * 0.8, days * COLUMN_WIDTH.day);
+    }
+  }
+
+  // Auto-scroll to center "Today" on mount and when view changes
+  useEffect(() => {
+    if (scrollContainerRef.current) {
+      const container = scrollContainerRef.current;
+      const containerWidth = container.clientWidth;
+      const scrollTarget = todayPosition - (containerWidth / 2) + LABEL_WIDTH;
+      container.scrollLeft = Math.max(0, scrollTarget);
+    }
+  }, [todayPosition, viewMode]);
 
   const getProjectColor = (projectId: string | null) => {
     if (!projectId) return 'hsl(var(--muted))';
@@ -73,26 +180,33 @@ export const GanttChart = ({ activities, projects }: GanttChartProps) => {
     return project?.name || t.privateActivity;
   };
 
-  // Generate date headers
-  const dateHeaders = useMemo(() => {
-    const headers = [];
-    for (let i = 0; i <= totalDays; i += Math.max(1, Math.floor(totalDays / 10))) {
-      const date = addDays(startDate, i);
-      headers.push({
-        date,
-        offset: (i / totalDays) * 100,
-      });
-    }
-    return headers;
-  }, [startDate, totalDays]);
+  const totalWidth = columns.length * COLUMN_WIDTH[viewMode];
 
   return (
     <Card className="h-full">
       <CardHeader className="pb-3">
-        <CardTitle className="flex items-center gap-2 text-lg">
-          <BarChart3 className="h-5 w-5 text-primary" />
-          {t.ganttChart}
-        </CardTitle>
+        <div className="flex items-center justify-between">
+          <CardTitle className="flex items-center gap-2 text-lg">
+            <BarChart3 className="h-5 w-5 text-primary" />
+            {t.ganttChart}
+          </CardTitle>
+          
+          {/* View Mode Switcher */}
+          <ToggleGroup type="single" value={viewMode} onValueChange={(v) => v && setViewMode(v as ViewMode)}>
+            <ToggleGroupItem value="day" aria-label={t.dayView} className="text-xs px-3">
+              <CalendarDays className="h-4 w-4 mr-1" />
+              {t.dayView}
+            </ToggleGroupItem>
+            <ToggleGroupItem value="week" aria-label={t.weekView} className="text-xs px-3">
+              <CalendarRange className="h-4 w-4 mr-1" />
+              {t.weekView}
+            </ToggleGroupItem>
+            <ToggleGroupItem value="month" aria-label={t.monthView} className="text-xs px-3">
+              <Calendar className="h-4 w-4 mr-1" />
+              {t.monthView}
+            </ToggleGroupItem>
+          </ToggleGroup>
+        </div>
       </CardHeader>
       <CardContent>
         {doingActivities.length === 0 ? (
@@ -100,80 +214,126 @@ export const GanttChart = ({ activities, projects }: GanttChartProps) => {
             {t.noDoingActivities}
           </div>
         ) : (
-          <div className="space-y-4">
-            {/* Date header */}
-            <div className="relative h-8 border-b border-border">
-              {dateHeaders.map(({ date, offset }, i) => (
-                <div
-                  key={i}
-                  className="absolute top-0 text-xs text-muted-foreground"
-                  style={{ left: `${offset}%`, transform: 'translateX(-50%)' }}
-                >
-                  {format(date, 'MMM d')}
-                </div>
-              ))}
-            </div>
-
-            {/* Gantt bars */}
-            <div className="relative space-y-3">
-              {/* Today marker */}
-              <div
-                className="absolute top-0 bottom-0 w-0.5 bg-destructive z-10"
-                style={{ left: `${todayOffset}%` }}
-              >
-                <span className="absolute -top-5 left-1/2 -translate-x-1/2 text-xs font-medium text-destructive whitespace-nowrap">
-                  {t.today}
-                </span>
-              </div>
-
-              {doingActivities.map(activity => {
-                const activityStart = startOfDay(new Date(activity.start_date));
-                const today = startOfDay(new Date());
-                
-                // Calculate planned end date (original duration)
-                const plannedEnd = activity.duration_days
-                  ? addDays(activityStart, activity.duration_days)
-                  : today;
-                
-                // Check if overdue: planned end has passed and still in "doing"
-                const isOverdue = activity.duration_days && today > plannedEnd;
-                
-                // Dynamic duration expansion: if overdue, extend visual bar to today
-                // This preserves the original start date (fixed anchoring) but expands duration visually
-                const visualEnd = isOverdue ? today : plannedEnd;
-                
-                const startOffset = Math.max(0, (differenceInDays(activityStart, startDate) / totalDays) * 100);
-                const width = Math.max(5, (differenceInDays(visualEnd, activityStart) / totalDays) * 100);
-                
-                return (
-                  <div key={activity.id} className="relative h-10">
-                    <div className="flex items-center h-full">
-                      <span className="w-32 text-sm truncate pr-2 text-foreground">
-                        {activity.title}
-                      </span>
-                      <div className="flex-1 relative h-7 bg-muted/30 rounded">
-                        <div
-                          className={cn(
-                            'gantt-bar absolute h-full rounded flex items-center px-2 text-xs font-medium',
-                            isOverdue && 'critical-alarm'
-                          )}
-                          style={{
-                            left: `${startOffset}%`,
-                            width: `${Math.min(width, 100 - startOffset)}%`,
-                            backgroundColor: getProjectColor(activity.project_id),
-                            color: '#fff',
-                          }}
-                        >
-                          <span className="truncate opacity-90">
-                            {getProjectName(activity.project_id)}
-                          </span>
-                        </div>
-                      </div>
-                    </div>
+          <div className="flex">
+            {/* Fixed Labels Column */}
+            <div className="flex-shrink-0" style={{ width: LABEL_WIDTH }}>
+              {/* Header placeholder */}
+              <div className="h-14 border-b border-border" />
+              
+              {/* Activity labels */}
+              <div className="space-y-1 pt-2">
+                {doingActivities.map(activity => (
+                  <div key={activity.id} className="h-8 flex items-center">
+                    <span className="text-sm truncate pr-2 text-foreground font-medium">
+                      {activity.title}
+                    </span>
                   </div>
-                );
-              })}
+                ))}
+              </div>
             </div>
+
+            {/* Scrollable Timeline */}
+            <ScrollArea 
+              className="flex-1 overflow-x-auto" 
+              ref={scrollContainerRef}
+            >
+              <div style={{ width: totalWidth, minWidth: '100%' }}>
+                {/* Date Headers */}
+                <div className="flex border-b border-border">
+                  {columns.map((col, i) => (
+                    <div
+                      key={i}
+                      className="flex-shrink-0 text-center border-r border-border/50"
+                      style={{ width: COLUMN_WIDTH[viewMode] }}
+                    >
+                      <div className="text-xs font-medium text-foreground py-1">
+                        {col.label}
+                      </div>
+                      {col.subLabel && (
+                        <div className="text-[10px] text-muted-foreground pb-1">
+                          {col.subLabel}
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+
+                {/* Grid and Bars */}
+                <div className="relative">
+                  {/* Grid columns */}
+                  <div className="absolute inset-0 flex pointer-events-none">
+                    {columns.map((col, i) => {
+                      const isToday = viewMode === 'day' && 
+                        format(col.date, 'yyyy-MM-dd') === format(new Date(), 'yyyy-MM-dd');
+                      return (
+                        <div
+                          key={i}
+                          className={cn(
+                            "flex-shrink-0 h-full border-r border-border/30",
+                            isToday && "bg-primary/5"
+                          )}
+                          style={{ width: COLUMN_WIDTH[viewMode] }}
+                        />
+                      );
+                    })}
+                  </div>
+
+                  {/* Today marker */}
+                  <div
+                    className="absolute top-0 bottom-0 w-0.5 bg-destructive z-20"
+                    style={{ left: todayPosition }}
+                  >
+                    <span className="absolute -top-6 left-1/2 -translate-x-1/2 text-[10px] font-semibold text-destructive whitespace-nowrap bg-background px-1 rounded">
+                      {t.today}
+                    </span>
+                  </div>
+
+                  {/* Activity Bars */}
+                  <div className="relative space-y-1 pt-2">
+                    {doingActivities.map(activity => {
+                      const activityStart = startOfDay(new Date(activity.start_date));
+                      const today = startOfDay(new Date());
+                      
+                      // Calculate planned end date (original duration)
+                      const plannedEnd = activity.duration_days
+                        ? addDays(activityStart, activity.duration_days)
+                        : today;
+                      
+                      // Check if overdue: planned end has passed and still in "doing"
+                      const isOverdue = activity.duration_days && today > plannedEnd;
+                      
+                      // Dynamic duration expansion: if overdue, extend visual bar to today
+                      const visualEnd = isOverdue ? today : plannedEnd;
+                      
+                      const barLeft = calculatePosition(activityStart, startDate, viewMode);
+                      const barWidth = calculateWidth(activityStart, visualEnd, viewMode);
+                      
+                      return (
+                        <div key={activity.id} className="relative h-8">
+                          <div
+                            className={cn(
+                              'gantt-bar absolute h-6 top-1 rounded flex items-center px-2 text-xs font-medium shadow-sm',
+                              isOverdue && 'critical-alarm'
+                            )}
+                            style={{
+                              left: barLeft,
+                              width: barWidth,
+                              backgroundColor: getProjectColor(activity.project_id),
+                              color: '#fff',
+                            }}
+                          >
+                            <span className="truncate opacity-90">
+                              {getProjectName(activity.project_id)}
+                            </span>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              </div>
+              <ScrollBar orientation="horizontal" />
+            </ScrollArea>
           </div>
         )}
       </CardContent>
