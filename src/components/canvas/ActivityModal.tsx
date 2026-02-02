@@ -23,6 +23,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { RichTextEditor } from '@/components/ui/rich-text-editor';
 import { format } from 'date-fns';
 
 interface ActivityModalProps {
@@ -34,6 +35,7 @@ interface ActivityModalProps {
     start_date: string;
     duration_days: number | null;
     progress: number | null;
+    notes: string | null;
   }) => void;
   activity?: Activity | null;
   projects: Project[];
@@ -52,6 +54,7 @@ export const ActivityModal = ({
   const [startDate, setStartDate] = useState(format(new Date(), 'yyyy-MM-dd'));
   const [durationDays, setDurationDays] = useState<string>('');
   const [progress, setProgress] = useState<number>(0);
+  const [notes, setNotes] = useState<string>('');
 
   useEffect(() => {
     if (activity) {
@@ -60,12 +63,14 @@ export const ActivityModal = ({
       setStartDate(format(new Date(activity.start_date), 'yyyy-MM-dd'));
       setDurationDays(activity.duration_days?.toString() || '');
       setProgress(activity.progress || 0);
+      setNotes(activity.notes || '');
     } else {
       setTitle('');
       setProjectId('none');
       setStartDate(format(new Date(), 'yyyy-MM-dd'));
       setDurationDays('');
       setProgress(0);
+      setNotes('');
     }
   }, [activity, open]);
 
@@ -78,13 +83,14 @@ export const ActivityModal = ({
       start_date: new Date(startDate).toISOString(),
       duration_days: durationDays ? parseInt(durationDays) : null,
       progress: progress,
+      notes: notes || null,
     });
     onClose();
   };
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent>
+      <DialogContent className="max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>
             {activity ? t.edit : t.addActivity}
@@ -161,6 +167,16 @@ export const ActivityModal = ({
               max={100}
               step={5}
               className="w-full"
+            />
+          </div>
+
+          {/* Notes Field */}
+          <div className="space-y-2">
+            <Label>{t.notes}</Label>
+            <RichTextEditor
+              content={notes}
+              onChange={setNotes}
+              placeholder={t.notes + '...'}
             />
           </div>
         </div>

@@ -16,6 +16,7 @@ export interface Activity {
   start_date: string;
   duration_days: number | null;
   progress: number | null;
+  notes: string | null;
   user_id: string;
   created_at: string;
   updated_at: string;
@@ -113,6 +114,7 @@ export const useActivities = () => {
       start_date,
       duration_days,
       progress,
+      notes,
     }: {
       id: string;
       title?: string;
@@ -121,6 +123,7 @@ export const useActivities = () => {
       start_date?: string;
       duration_days?: number | null;
       progress?: number | null;
+      notes?: string | null;
     }) => {
       // If moving to finished, delete the activity (per PRD rule)
       if (status === 'finished') {
@@ -141,6 +144,7 @@ export const useActivities = () => {
       if (start_date !== undefined) updateData.start_date = start_date;
       if (duration_days !== undefined) updateData.duration_days = duration_days;
       if (progress !== undefined) updateData.progress = progress;
+      if (notes !== undefined) updateData.notes = notes;
 
       const { data, error } = await supabase
         .from('activities')

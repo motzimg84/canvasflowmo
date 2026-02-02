@@ -51,7 +51,7 @@ const Dashboard = () => {
     updateActivity.mutate({ id, status });
   };
 
-  const handleSaveActivity = (data: { title: string; project_id: string | null; start_date: string; duration_days: number | null; progress: number | null }) => {
+  const handleSaveActivity = (data: { title: string; project_id: string | null; start_date: string; duration_days: number | null; progress: number | null; notes: string | null }) => {
     if (editingActivity) {
       updateActivity.mutate({ id: editingActivity.id, ...data });
     } else {
