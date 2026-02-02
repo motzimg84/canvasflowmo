@@ -1,7 +1,7 @@
 // PROJECT: CanvasFlow Pro
 // MODULE: Dashboard Page
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useProjects } from '@/hooks/useProjects';
@@ -25,6 +25,27 @@ const Dashboard = () => {
   
   const [activityModalOpen, setActivityModalOpen] = useState(false);
   const [editingActivity, setEditingActivity] = useState<Activity | null>(null);
+  const [activeProjectId, setActiveProjectId] = useState<string | null>(null);
+
+  // Memoized filtered activities based on selected project
+  const filteredTodoActivities = useMemo(() => {
+    if (!activeProjectId) return todoActivities;
+    return todoActivities.filter(a => a.project_id === activeProjectId);
+  }, [todoActivities, activeProjectId]);
+
+  const filteredDoingActivities = useMemo(() => {
+    if (!activeProjectId) return doingActivities;
+    return doingActivities.filter(a => a.project_id === activeProjectId);
+  }, [doingActivities, activeProjectId]);
+
+  const filteredActivities = useMemo(() => {
+    if (!activeProjectId) return activities;
+    return activities.filter(a => a.project_id === activeProjectId);
+  }, [activities, activeProjectId]);
+
+  const handleProjectSelect = (projectId: string | null) => {
+    setActiveProjectId(prev => prev === projectId ? null : projectId);
+  };
 
   const handleMoveActivity = (id: string, status: 'todo' | 'doing' | 'finished') => {
     updateActivity.mutate({ id, status });
@@ -98,6 +119,8 @@ const Dashboard = () => {
             <ProjectsList
               projects={projects}
               usedColors={usedColors}
+              activeProjectId={activeProjectId}
+              onSelectProject={handleProjectSelect}
               onCreateProject={(data) => createProject.mutate(data)}
               onUpdateProject={(data) => updateProject.mutate(data)}
               onDeleteProject={(id) => deleteProject.mutate(id)}
@@ -110,7 +133,7 @@ const Dashboard = () => {
               <CanvasColumn
                 title={t.todo}
                 status="todo"
-                activities={todoActivities}
+                activities={filteredTodoActivities}
                 projects={projects}
                 onAddActivity={() => setActivityModalOpen(true)}
                 onMoveActivity={handleMoveActivity}
@@ -121,7 +144,7 @@ const Dashboard = () => {
               <CanvasColumn
                 title={t.doing}
                 status="doing"
-                activities={doingActivities}
+                activities={filteredDoingActivities}
                 projects={projects}
                 onMoveActivity={handleMoveActivity}
                 onEditActivity={(a) => { setEditingActivity(a); setActivityModalOpen(true); }}
@@ -131,7 +154,7 @@ const Dashboard = () => {
             </div>
 
             {/* Gantt */}
-            <GanttChart activities={activities} projects={projects} onEditActivity={handleGanttEditActivity} />
+            <GanttChart activities={filteredActivities} projects={projects} onEditActivity={handleGanttEditActivity} />
           </div>
         </div>
       </main>
@@ -147,7 +170,7 @@ const Dashboard = () => {
       {/* AI Chat Sidebar */}
       <AIChatSidebar
         projects={projects}
-        activities={activities}
+        activities={filteredActivities}
         onCreateProject={handleAICreateProject}
         onMoveActivity={handleMoveActivity}
         onCreateActivity={handleAICreateActivity}
