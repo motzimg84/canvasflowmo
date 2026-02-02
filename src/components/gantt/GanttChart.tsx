@@ -354,10 +354,10 @@ export const GanttChart = ({ activities, projects, onEditActivity }: GanttChartP
                               }}
                             />
                             
-                            {/* Activity title inside bar */}
+                            {/* Progress percentage inside bar */}
                             {showTextInside && (
                               <span className="absolute inset-0 flex items-center px-2 text-xs font-medium text-white truncate z-10">
-                                {activity.title}
+                                {progressPercent}%
                               </span>
                             )}
                           </div>
