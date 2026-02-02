@@ -42,6 +42,9 @@ export interface Translations {
   moveToTodo: string;
   moveToDoing: string;
   moveToFinished: string;
+  notes: string;
+  showNotes: string;
+  hideNotes: string;
   progress: string;
   
   // Settings
@@ -118,6 +121,9 @@ export const translations: Record<Language, Translations> = {
     moveToTodo: "Move to To Do",
     moveToDoing: "Move to In Progress",
     moveToFinished: "Mark as Finished",
+    notes: "Notes",
+    showNotes: "Show notes",
+    hideNotes: "Hide notes",
     progress: "Progress",
     settings: "Settings",
     companyName: "Company Name",
@@ -182,6 +188,9 @@ export const translations: Record<Language, Translations> = {
     moveToTodo: "Mover a Por hacer",
     moveToDoing: "Mover a En curso",
     moveToFinished: "Marcar como Finalizado",
+    notes: "Notas",
+    showNotes: "Mostrar notas",
+    hideNotes: "Ocultar notas",
     progress: "Progreso",
     settings: "Configuración",
     companyName: "Nombre de la Empresa",
@@ -246,6 +255,9 @@ export const translations: Record<Language, Translations> = {
     moveToTodo: "Zu erledigen verschieben",
     moveToDoing: "In Arbeit verschieben",
     moveToFinished: "Als abgeschlossen markieren",
+    notes: "Notizen",
+    showNotes: "Notizen anzeigen",
+    hideNotes: "Notizen ausblenden",
     progress: "Fortschritt",
     settings: "Einstellungen",
     companyName: "Firmenname",
@@ -310,6 +322,9 @@ export const translations: Record<Language, Translations> = {
     moveToTodo: "Déplacer vers À faire",
     moveToDoing: "Déplacer vers En cours",
     moveToFinished: "Marquer comme terminé",
+    notes: "Notes",
+    showNotes: "Afficher les notes",
+    hideNotes: "Masquer les notes",
     progress: "Progression",
     settings: "Paramètres",
     companyName: "Nom de l'entreprise",
@@ -374,6 +389,9 @@ export const translations: Record<Language, Translations> = {
     moveToTodo: "Sposta in Da fare",
     moveToDoing: "Sposta in In corso",
     moveToFinished: "Segna come Completato",
+    notes: "Note",
+    showNotes: "Mostra note",
+    hideNotes: "Nascondi note",
     progress: "Progresso",
     settings: "Impostazioni",
     companyName: "Nome Azienda",

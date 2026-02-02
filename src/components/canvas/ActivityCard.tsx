@@ -1,7 +1,7 @@
 // PROJECT: CanvasFlow Pro
 // MODULE: Activity Card Component
 
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { Activity } from '@/hooks/useActivities';
 import { Project } from '@/hooks/useProjects';
 import { useLanguage } from '@/contexts/LanguageContext';
@@ -13,7 +13,9 @@ import {
   DropdownMenuItem, 
   DropdownMenuTrigger 
 } from '@/components/ui/dropdown-menu';
-import { MoreHorizontal, ArrowRight, Calendar, Clock, AlertTriangle } from 'lucide-react';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import { RichTextDisplay } from '@/components/ui/rich-text-editor';
+import { MoreHorizontal, ArrowRight, Calendar, Clock, AlertTriangle, ChevronDown, ChevronUp, FileText } from 'lucide-react';
 import { format, differenceInDays, addDays, isPast } from 'date-fns';
 import { cn } from '@/lib/utils';
 
@@ -33,6 +35,8 @@ export const ActivityCard = ({
   onDelete,
 }: ActivityCardProps) => {
   const { t } = useLanguage();
+  const [notesOpen, setNotesOpen] = useState(false);
+  const hasNotes = activity.notes && activity.notes !== '<p></p>';
 
   // Calculate alarm states
   const alarmState = useMemo(() => {
@@ -175,6 +179,26 @@ export const ActivityCard = ({
             <AlertTriangle className="h-3 w-3" />
             {daysInfo.label} (+{daysInfo.days} {t.daysLabel})
           </div>
+        )}
+        
+        {/* Collapsible Notes Section */}
+        {hasNotes && (
+          <Collapsible open={notesOpen} onOpenChange={setNotesOpen} className="mt-2">
+            <CollapsibleTrigger asChild>
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                className="h-6 px-2 text-xs text-muted-foreground hover:text-foreground w-full justify-start"
+              >
+                <FileText className="h-3 w-3 mr-1" />
+                {notesOpen ? t.hideNotes : t.showNotes}
+                {notesOpen ? <ChevronUp className="h-3 w-3 ml-auto" /> : <ChevronDown className="h-3 w-3 ml-auto" />}
+              </Button>
+            </CollapsibleTrigger>
+            <CollapsibleContent className="mt-2 pt-2 border-t">
+              <RichTextDisplay content={activity.notes || ''} className="text-xs" />
+            </CollapsibleContent>
+          </Collapsible>
         )}
       </CardContent>
     </Card>
