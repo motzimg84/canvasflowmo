@@ -1,7 +1,7 @@
 // PROJECT: CanvasFlow Pro
 // MODULE: Activity Card Component
 
-import { useMemo, useState } from 'react';
+import { useState } from 'react';
 import { Activity } from '@/hooks/useActivities';
 import { Project } from '@/hooks/useProjects';
 import { useLanguage } from '@/contexts/LanguageContext';
@@ -16,8 +16,9 @@ import {
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { RichTextDisplay } from '@/components/ui/rich-text-editor';
 import { MoreHorizontal, ArrowRight, Calendar, Clock, AlertTriangle, ChevronDown, ChevronUp, FileText } from 'lucide-react';
-import { format, differenceInDays, addDays, isPast } from 'date-fns';
+import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
+import { calculateActivityAlarm } from '@/lib/activity-utils';
 
 interface ActivityCardProps {
   activity: Activity;
@@ -38,52 +39,25 @@ export const ActivityCard = ({
   const [notesOpen, setNotesOpen] = useState(false);
   const hasNotes = activity.notes && activity.notes !== '<p></p>';
 
-  // Calculate alarm states
-  const alarmState = useMemo(() => {
-    const startDate = new Date(activity.start_date);
-    const today = new Date();
-    
-    if (activity.status === 'doing') {
-      // Calculate end date for doing activities
-      const endDate = activity.duration_days 
-        ? addDays(startDate, activity.duration_days)
-        : today;
-      
-      // Critical alarm: overdue (end date is past)
-      if (isPast(endDate) && activity.duration_days) {
-        return 'critical';
-      }
-    }
-    
-    if (activity.status === 'todo') {
-      // Ghost warning: should have started already
-      if (isPast(startDate)) {
-        return 'ghost';
-      }
-    }
-    
-    return 'normal';
-  }, [activity]);
-
-  const daysInfo = useMemo(() => {
-    const startDate = new Date(activity.start_date);
-    const today = new Date();
-    
-    if (activity.status === 'todo' && isPast(startDate)) {
-      const daysLate = differenceInDays(today, startDate);
+  // Use shared alarm calculation (single source of truth)
+  const alarmInfo = calculateActivityAlarm(activity);
+  const alarmState = alarmInfo.state;
+  
+  // Calculate days info for display
+  const daysInfo = (() => {
+    if (alarmState === 'ghost') {
+      const startDate = new Date(activity.start_date);
+      const today = new Date();
+      const daysLate = Math.floor((today.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24));
       return { label: t.startWarning, days: daysLate };
     }
     
-    if (activity.status === 'doing' && activity.duration_days) {
-      const endDate = addDays(startDate, activity.duration_days);
-      if (isPast(endDate)) {
-        const daysOverdue = differenceInDays(today, endDate);
-        return { label: t.overdueAlarm, days: daysOverdue };
-      }
+    if (alarmState === 'critical' && alarmInfo.daysOverdue > 0) {
+      return { label: t.overdueAlarm, days: alarmInfo.daysOverdue };
     }
     
     return null;
-  }, [activity, t]);
+  })();
 
   return (
     <Card
