@@ -11,6 +11,7 @@ import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import { differenceInDays, addDays, format, startOfDay, min, max, startOfWeek, startOfMonth, endOfWeek, endOfMonth, addWeeks, addMonths } from 'date-fns';
 import { BarChart3, Calendar, CalendarDays, CalendarRange } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { calculateActivityAlarm } from '@/lib/activity-utils';
 
 interface GanttChartProps {
   activities: Activity[];
@@ -296,18 +297,11 @@ export const GanttChart = ({ activities, projects, onEditActivity }: GanttChartP
                   <div className="relative space-y-1 pt-2">
                     {doingActivities.map(activity => {
                       const activityStart = startOfDay(new Date(activity.start_date));
-                      const today = startOfDay(new Date());
                       
-                      // Calculate planned end date (original duration)
-                      const plannedEnd = activity.duration_days
-                        ? addDays(activityStart, activity.duration_days)
-                        : today;
-                      
-                      // Check if overdue: planned end has passed and still in "doing"
-                      const isOverdue = activity.duration_days && today > plannedEnd;
-                      
-                      // Dynamic duration expansion: if overdue, extend visual bar to today
-                      const visualEnd = isOverdue ? today : plannedEnd;
+                      // Use shared alarm calculation (single source of truth with Canvas)
+                      const alarmInfo = calculateActivityAlarm(activity);
+                      const isOverdue = alarmInfo.isOverdue;
+                      const visualEnd = alarmInfo.visualEndDate;
                       
                       const barLeft = calculatePosition(activityStart, startDate, viewMode);
                       const barWidth = calculateWidth(activityStart, visualEnd, viewMode);
