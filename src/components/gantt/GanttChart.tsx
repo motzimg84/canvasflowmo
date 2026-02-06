@@ -8,6 +8,7 @@ import { useLanguage } from '@/contexts/LanguageContext';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { differenceInDays, addDays, format, startOfDay, min, max, startOfWeek, startOfMonth, endOfWeek, endOfMonth, addWeeks, addMonths } from 'date-fns';
 import { BarChart3, Calendar, CalendarDays, CalendarRange } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -188,31 +189,32 @@ export const GanttChart = ({ activities, projects, onEditActivity }: GanttChartP
   };
 
   return (
-    <Card className="h-full">
-      <CardHeader className="pb-3">
-        <div className="flex items-center justify-between">
-          <CardTitle className="flex items-center gap-2 text-lg">
-            <BarChart3 className="h-5 w-5 text-primary" />
-            {t.ganttChart}
-          </CardTitle>
-          
-          {/* View Mode Switcher */}
-          <ToggleGroup type="single" value={viewMode} onValueChange={(v) => v && setViewMode(v as ViewMode)}>
-            <ToggleGroupItem value="day" aria-label={t.dayView} className="text-xs px-3">
-              <CalendarDays className="h-4 w-4 mr-1" />
-              {t.dayView}
-            </ToggleGroupItem>
-            <ToggleGroupItem value="week" aria-label={t.weekView} className="text-xs px-3">
-              <CalendarRange className="h-4 w-4 mr-1" />
-              {t.weekView}
-            </ToggleGroupItem>
-            <ToggleGroupItem value="month" aria-label={t.monthView} className="text-xs px-3">
-              <Calendar className="h-4 w-4 mr-1" />
-              {t.monthView}
-            </ToggleGroupItem>
-          </ToggleGroup>
-        </div>
-      </CardHeader>
+    <TooltipProvider>
+      <Card className="h-full">
+        <CardHeader className="pb-3">
+          <div className="flex items-center justify-between">
+            <CardTitle className="flex items-center gap-2 text-lg">
+              <BarChart3 className="h-5 w-5 text-primary" />
+              {t.ganttChart}
+            </CardTitle>
+            
+            {/* View Mode Switcher */}
+            <ToggleGroup type="single" value={viewMode} onValueChange={(v) => v && setViewMode(v as ViewMode)}>
+              <ToggleGroupItem value="day" aria-label={t.dayView} className="text-xs px-3">
+                <CalendarDays className="h-4 w-4 mr-1" />
+                {t.dayView}
+              </ToggleGroupItem>
+              <ToggleGroupItem value="week" aria-label={t.weekView} className="text-xs px-3">
+                <CalendarRange className="h-4 w-4 mr-1" />
+                {t.weekView}
+              </ToggleGroupItem>
+              <ToggleGroupItem value="month" aria-label={t.monthView} className="text-xs px-3">
+                <Calendar className="h-4 w-4 mr-1" />
+                {t.monthView}
+              </ToggleGroupItem>
+            </ToggleGroup>
+          </div>
+        </CardHeader>
       <CardContent>
         {doingActivities.length === 0 ? (
           <div className="flex items-center justify-center h-40 text-muted-foreground">
@@ -301,6 +303,7 @@ export const GanttChart = ({ activities, projects, onEditActivity }: GanttChartP
                       // Use shared alarm calculation (single source of truth with Canvas)
                       const alarmInfo = calculateActivityAlarm(activity);
                       const isOverdue = alarmInfo.isOverdue;
+                      const daysOverdue = alarmInfo.daysOverdue;
                       const visualEnd = alarmInfo.visualEndDate;
                       
                       const barLeft = calculatePosition(activityStart, startDate, viewMode);
@@ -312,49 +315,71 @@ export const GanttChart = ({ activities, projects, onEditActivity }: GanttChartP
                       
                       // Determine if text fits inside bar
                       const showTextInside = barWidth >= MIN_BAR_WIDTH_FOR_TEXT;
+
+                      const barElement = (
+                        <div
+                          className={cn(
+                            'gantt-bar absolute top-1 rounded-md cursor-pointer transition-all hover:ring-2 hover:ring-primary/50 hover:ring-offset-1 overflow-hidden',
+                            isOverdue && 'critical-alarm'
+                          )}
+                          style={{
+                            left: barLeft,
+                            width: barWidth,
+                            height: BAR_HEIGHT,
+                            backgroundColor: getProjectColor(activity.project_id),
+                          }}
+                          onClick={() => handleBarClick(activity)}
+                        >
+                          {/* Progress fill */}
+                          <div
+                            className="absolute inset-y-0 left-0 rounded-l-md transition-all"
+                            style={{
+                              width: progressWidth,
+                              backgroundColor: 'rgba(255, 255, 255, 0.35)',
+                            }}
+                          />
+                          
+                          {/* Inner progress bar with darker shade */}
+                          <div
+                            className="absolute inset-y-1 left-1 rounded transition-all"
+                            style={{
+                              width: Math.max(0, progressWidth - 8),
+                              backgroundColor: 'rgba(0, 0, 0, 0.2)',
+                            }}
+                          />
+                          
+                          {/* Progress percentage inside bar */}
+                          {showTextInside && (
+                            <span className="absolute inset-0 flex items-center px-2 text-xs font-medium text-white truncate z-10">
+                              {progressPercent}%
+                            </span>
+                          )}
+                        </div>
+                      );
                       
                       return (
                         <div key={activity.id} className="relative h-8">
-                          {/* Main bar container */}
-                          <div
-                            className={cn(
-                              'gantt-bar absolute top-1 rounded-md cursor-pointer transition-all hover:ring-2 hover:ring-primary/50 hover:ring-offset-1 overflow-hidden',
-                              isOverdue && 'critical-alarm'
-                            )}
-                            style={{
-                              left: barLeft,
-                              width: barWidth,
-                              height: BAR_HEIGHT,
-                              backgroundColor: getProjectColor(activity.project_id),
-                            }}
-                            onClick={() => handleBarClick(activity)}
-                            title={activity.title}
-                          >
-                            {/* Progress fill */}
-                            <div
-                              className="absolute inset-y-0 left-0 rounded-l-md transition-all"
-                              style={{
-                                width: progressWidth,
-                                backgroundColor: 'rgba(255, 255, 255, 0.35)',
-                              }}
-                            />
-                            
-                            {/* Inner progress bar with darker shade */}
-                            <div
-                              className="absolute inset-y-1 left-1 rounded transition-all"
-                              style={{
-                                width: Math.max(0, progressWidth - 8),
-                                backgroundColor: 'rgba(0, 0, 0, 0.2)',
-                              }}
-                            />
-                            
-                            {/* Progress percentage inside bar */}
-                            {showTextInside && (
-                              <span className="absolute inset-0 flex items-center px-2 text-xs font-medium text-white truncate z-10">
-                                {progressPercent}%
-                              </span>
-                            )}
-                          </div>
+                          {/* Wrap in tooltip for overdue activities */}
+                          {isOverdue ? (
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                {barElement}
+                              </TooltipTrigger>
+                              <TooltipContent side="top" className="bg-destructive text-destructive-foreground border-destructive">
+                                <p className="font-medium">{activity.title}</p>
+                                <p className="text-sm">{t.daysOverdue.replace('{count}', String(daysOverdue))}</p>
+                              </TooltipContent>
+                            </Tooltip>
+                          ) : (
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                {barElement}
+                              </TooltipTrigger>
+                              <TooltipContent side="top">
+                                <p className="font-medium">{activity.title}</p>
+                              </TooltipContent>
+                            </Tooltip>
+                          )}
                           
                           {/* Activity title outside bar (if bar is too small) */}
                           {!showTextInside && (
@@ -380,5 +405,6 @@ export const GanttChart = ({ activities, projects, onEditActivity }: GanttChartP
         )}
       </CardContent>
     </Card>
+    </TooltipProvider>
   );
 };
