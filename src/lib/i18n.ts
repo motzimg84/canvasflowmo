@@ -65,6 +65,7 @@ export interface Translations {
   weekView: string;
   monthView: string;
   today: string;
+  daysOverdue: string;
   
   // AI Assistant
   aiAssistant: string;
@@ -138,6 +139,7 @@ export const translations: Record<Language, Translations> = {
     weekView: "Week",
     monthView: "Month",
     today: "Today",
+    daysOverdue: "{count} day(s) overdue",
     aiAssistant: "AI Assistant",
     askAI: "Ask AI",
     aiPlaceholder: "Ask me to create projects, move activities, or change language...",
@@ -205,6 +207,7 @@ export const translations: Record<Language, Translations> = {
     weekView: "Semana",
     monthView: "Mes",
     today: "Hoy",
+    daysOverdue: "{count} día(s) de retraso",
     aiAssistant: "Asistente IA",
     askAI: "Preguntar a IA",
     aiPlaceholder: "Pídeme crear proyectos, mover actividades o cambiar idioma...",
@@ -272,6 +275,7 @@ export const translations: Record<Language, Translations> = {
     weekView: "Woche",
     monthView: "Monat",
     today: "Heute",
+    daysOverdue: "{count} Tag(e) überfällig",
     aiAssistant: "KI-Assistent",
     askAI: "KI fragen",
     aiPlaceholder: "Bitte mich, Projekte zu erstellen, Aktivitäten zu verschieben oder die Sprache zu ändern...",
@@ -339,6 +343,7 @@ export const translations: Record<Language, Translations> = {
     weekView: "Semaine",
     monthView: "Mois",
     today: "Aujourd'hui",
+    daysOverdue: "{count} jour(s) de retard",
     aiAssistant: "Assistant IA",
     askAI: "Demander à l'IA",
     aiPlaceholder: "Demandez-moi de créer des projets, déplacer des activités ou changer de langue...",
@@ -406,6 +411,7 @@ export const translations: Record<Language, Translations> = {
     weekView: "Settimana",
     monthView: "Mese",
     today: "Oggi",
+    daysOverdue: "{count} giorno/i di ritardo",
     aiAssistant: "Assistente IA",
     askAI: "Chiedi all'IA",
     aiPlaceholder: "Chiedimi di creare progetti, spostare attività o cambiare lingua...",
