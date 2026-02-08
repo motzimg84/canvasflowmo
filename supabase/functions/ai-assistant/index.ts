@@ -8,6 +8,175 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
+function buildSystemPrompt(projects: any[], activities: any[], language: string) {
+  const langName = language === 'es' ? 'Spanish' : language === 'pt' ? 'Portuguese' : language === 'de' ? 'German' : language === 'fr' ? 'French' : language === 'it' ? 'Italian' : 'English';
+
+  return `You are an AI assistant for CanvasFlow Pro, a project and activity management application.
+You are a "Superuser" orchestrator with full read/write access to ALL activity fields.
+
+Current context:
+- Language: ${language} (respond in ${langName})
+- Today's date: ${new Date().toISOString().split('T')[0]}
+- Projects: ${JSON.stringify(projects.map((p: any) => ({ name: p.name, id: p.id, color: p.color })))}
+- Activities (ALL fields): ${JSON.stringify(activities.map((a: any) => ({ title: a.title, id: a.id, status: a.status, project_id: a.project_id, start_date: a.start_date, duration_days: a.duration_days, progress: a.progress, notes: a.notes })))}
+
+CAPABILITIES:
+1. Create projects (create_project)
+2. Move activities between statuses (move_activity)
+3. Switch UI language (switch_language)
+4. Create activities with ALL fields (create_activity) — extract dates, durations, progress from natural language
+5. Delete activities (delete_activity)
+6. Edit any activity field: title, start_date, duration_days, progress, notes, project_id (update_activity)
+7. Batch-create multiple activities from a text block (batch_create_activities) — parse freeform text into structured tasks
+
+SMART EXTRACTION RULES:
+- When users paste a block of text with multiple tasks, use batch_create_activities to parse them all at once.
+- Extract dates relative to today (e.g., "tomorrow" = today + 1 day).
+- Extract durations (e.g., "2 hours" = 0.08 days, "3 days" = 3).
+- Extract progress percentages (e.g., "at 50%" = 50).
+- When a user mentions an activity by partial name, fuzzy-match it to the closest existing activity.
+- If text is ambiguous (e.g., could refer to multiple activities), ask for clarification BEFORE committing.
+
+IMPORTANT: When users reference projects/activities by name, always match to IDs from the context above.
+Always respond in ${langName}. Be helpful and concise.`;
+}
+
+const tools = [
+  {
+    type: "function",
+    function: {
+      name: "create_project",
+      description: "Create a new project with auto-assigned color",
+      parameters: {
+        type: "object",
+        properties: {
+          name: { type: "string", description: "The name of the project" }
+        },
+        required: ["name"],
+        additionalProperties: false
+      }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "move_activity",
+      description: "Move an activity to a different status (todo, doing, or finished)",
+      parameters: {
+        type: "object",
+        properties: {
+          activity_id: { type: "string", description: "The ID of the activity" },
+          new_status: { type: "string", enum: ["todo", "doing", "finished"], description: "The new status" }
+        },
+        required: ["activity_id", "new_status"],
+        additionalProperties: false
+      }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "switch_language",
+      description: "Switch the UI language",
+      parameters: {
+        type: "object",
+        properties: {
+          language: { type: "string", enum: ["en", "es", "pt", "de", "fr", "it"], description: "Language code" }
+        },
+        required: ["language"],
+        additionalProperties: false
+      }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "create_activity",
+      description: "Create a single activity with full field support. Use batch_create_activities for multiple tasks.",
+      parameters: {
+        type: "object",
+        properties: {
+          title: { type: "string", description: "Activity title" },
+          project_id: { type: "string", description: "Project ID to assign to (optional)" },
+          start_date: { type: "string", description: "Start date in YYYY-MM-DD format (optional, defaults to today)" },
+          duration_days: { type: "number", description: "Duration in days (optional)" },
+          progress: { type: "number", description: "Execution percentage 0-100 (optional)" },
+          notes: { type: "string", description: "Notes content in HTML (optional)" }
+        },
+        required: ["title"],
+        additionalProperties: false
+      }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "delete_activity",
+      description: "Delete an activity by ID",
+      parameters: {
+        type: "object",
+        properties: {
+          activity_id: { type: "string", description: "The ID of the activity to delete" }
+        },
+        required: ["activity_id"],
+        additionalProperties: false
+      }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "update_activity",
+      description: "Update any field(s) of an existing activity: title, project_id, start_date, duration_days, progress, notes. Only include fields you want to change.",
+      parameters: {
+        type: "object",
+        properties: {
+          activity_id: { type: "string", description: "The ID of the activity to update" },
+          title: { type: "string", description: "New title (optional)" },
+          project_id: { type: "string", description: "New project ID or null to unassign (optional)" },
+          start_date: { type: "string", description: "New start date YYYY-MM-DD (optional)" },
+          duration_days: { type: "number", description: "New duration in days (optional)" },
+          progress: { type: "number", description: "New progress 0-100 (optional)" },
+          notes: { type: "string", description: "New notes content in HTML (optional)" }
+        },
+        required: ["activity_id"],
+        additionalProperties: false
+      }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "batch_create_activities",
+      description: "Create multiple activities at once from parsed text. Each activity can have all fields. Use this when the user provides a block of text with multiple tasks.",
+      parameters: {
+        type: "object",
+        properties: {
+          activities: {
+            type: "array",
+            description: "Array of activities to create",
+            items: {
+              type: "object",
+              properties: {
+                title: { type: "string", description: "Activity title" },
+                project_id: { type: "string", description: "Project ID (optional)" },
+                start_date: { type: "string", description: "Start date YYYY-MM-DD (optional)" },
+                duration_days: { type: "number", description: "Duration in days (optional)" },
+                progress: { type: "number", description: "Progress 0-100 (optional)" },
+                notes: { type: "string", description: "Notes in HTML (optional)" }
+              },
+              required: ["title"],
+              additionalProperties: false
+            }
+          }
+        },
+        required: ["activities"],
+        additionalProperties: false
+      }
+    }
+  }
+];
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -21,152 +190,7 @@ serve(async (req) => {
       throw new Error("LOVABLE_API_KEY is not configured");
     }
 
-    const systemPrompt = `You are an AI assistant for CanvasFlow Pro, a project and activity management application.
-
-Current context:
-- Language: ${language} (respond in this language)
-- Projects: ${JSON.stringify(projects.map((p: { name: string; id: string; color: string }) => ({ name: p.name, id: p.id, color: p.color })))}
-- Activities: ${JSON.stringify(activities.map((a: { title: string; id: string; status: string; project_id: string | null }) => ({ title: a.title, id: a.id, status: a.status, project_id: a.project_id })))}
-
-You can help users by:
-1. Creating new projects (use create_project tool)
-2. Moving activities between statuses (use move_activity tool)
-3. Switching the UI language (use switch_language tool)
-4. Creating new activities/tasks (use create_activity tool) - When users mention a project by name, match it to the project ID from the Projects list above and use that ID
-5. Deleting activities (use delete_activity tool) - When users mention an activity by title, find the matching activity ID from the Activities list above
-6. Editing/renaming activities (use edit_activity tool) - When users mention an activity by title, find the matching activity ID from the Activities list above
-
-IMPORTANT: When users ask to create an activity and assign it to a project by name (e.g., "assign to Project Alpha"), you MUST find the matching project from the Projects list and use its ID in the create_activity tool call.
-IMPORTANT: When users ask to delete an activity by name (e.g., "delete the Team Meeting activity"), you MUST find the matching activity from the Activities list and use its ID in the delete_activity tool call.
-IMPORTANT: When users ask to rename/edit an activity (e.g., "rename Team Meeting to Weekly Standup"), you MUST find the matching activity from the Activities list and use its ID in the edit_activity tool call.
-
-Always respond in the user's language (${language === 'es' ? 'Spanish' : language === 'pt' ? 'Portuguese' : 'English'}).
-Be helpful and concise.`;
-
-    const tools = [
-      {
-        type: "function",
-        function: {
-          name: "create_project",
-          description: "Create a new project with auto-assigned color",
-          parameters: {
-            type: "object",
-            properties: {
-              name: {
-                type: "string",
-                description: "The name of the project to create"
-              }
-            },
-            required: ["name"],
-            additionalProperties: false
-          }
-        }
-      },
-      {
-        type: "function",
-        function: {
-          name: "move_activity",
-          description: "Move an activity to a different status (todo, doing, or finished)",
-          parameters: {
-            type: "object",
-            properties: {
-              activity_id: {
-                type: "string",
-                description: "The ID of the activity to move"
-              },
-              new_status: {
-                type: "string",
-                enum: ["todo", "doing", "finished"],
-                description: "The new status for the activity"
-              }
-            },
-            required: ["activity_id", "new_status"],
-            additionalProperties: false
-          }
-        }
-      },
-      {
-        type: "function",
-        function: {
-          name: "switch_language",
-          description: "Switch the UI language",
-          parameters: {
-            type: "object",
-            properties: {
-              language: {
-                type: "string",
-                enum: ["en", "es", "pt"],
-                description: "The language code to switch to (en=English, es=Spanish, pt=Portuguese)"
-              }
-            },
-            required: ["language"],
-            additionalProperties: false
-          }
-        }
-      },
-      {
-        type: "function",
-        function: {
-          name: "create_activity",
-          description: "Create a new activity/task with the given title. Optionally assign it to a project by providing the project's ID. When users mention a project by name, look up the ID from the provided Projects context.",
-          parameters: {
-            type: "object",
-            properties: {
-              title: {
-                type: "string",
-                description: "The title of the activity to create"
-              },
-              project_id: {
-                type: "string",
-                description: "The ID of the project to assign this activity to. Look up the ID from the Projects list when users reference a project by name."
-              }
-            },
-            required: ["title"],
-            additionalProperties: false
-          }
-        }
-      },
-      {
-        type: "function",
-        function: {
-          name: "delete_activity",
-          description: "Delete an existing activity by its ID. When users mention an activity by title, look up the ID from the provided Activities context.",
-          parameters: {
-            type: "object",
-            properties: {
-              activity_id: {
-                type: "string",
-                description: "The ID of the activity to delete. Look up the ID from the Activities list when users reference an activity by title."
-              }
-            },
-            required: ["activity_id"],
-            additionalProperties: false
-          }
-        }
-      },
-      {
-        type: "function",
-        function: {
-          name: "edit_activity",
-          description: "Edit/rename an existing activity. When users mention an activity by title, look up the ID from the provided Activities context.",
-          parameters: {
-            type: "object",
-            properties: {
-              activity_id: {
-                type: "string",
-                description: "The ID of the activity to edit. Look up the ID from the Activities list when users reference an activity by title."
-              },
-              new_title: {
-                type: "string",
-                description: "The new title for the activity"
-              }
-            },
-            required: ["activity_id", "new_title"],
-            additionalProperties: false
-          }
-        }
-      }
-    ];
+    const systemPrompt = buildSystemPrompt(projects, activities, language);
 
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",

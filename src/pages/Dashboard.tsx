@@ -71,14 +71,21 @@ const Dashboard = () => {
     createProject.mutate({ name, color });
   };
 
-  // AI-triggered activity creation
-  const handleAICreateActivity = (title: string, projectId?: string) => {
+  // AI-triggered activity creation (full field support)
+  const handleAICreateActivity = (data: { title: string; project_id?: string | null; start_date?: string; duration_days?: number | null; progress?: number | null; notes?: string | null }) => {
     createActivity.mutate({
-      title,
-      project_id: projectId || null,
-      start_date: new Date().toISOString().split('T')[0],
-      duration_days: null,
+      title: data.title,
+      project_id: data.project_id || null,
+      start_date: data.start_date || new Date().toISOString().split('T')[0],
+      duration_days: data.duration_days ?? null,
+      progress: data.progress ?? null,
+      notes: data.notes ?? null,
     });
+  };
+
+  // AI-triggered activity update (universal field access)
+  const handleAIUpdateActivity = (data: { id: string; title?: string; project_id?: string | null; start_date?: string; duration_days?: number | null; progress?: number | null; notes?: string | null }) => {
+    updateActivity.mutate(data);
   };
 
   return (
@@ -175,7 +182,7 @@ const Dashboard = () => {
         onMoveActivity={handleMoveActivity}
         onCreateActivity={handleAICreateActivity}
         onDeleteActivity={(id) => deleteActivity.mutate(id)}
-        onEditActivity={(id, newTitle) => updateActivity.mutate({ id, title: newTitle })}
+        onUpdateActivity={handleAIUpdateActivity}
       />
     </div>
   );
