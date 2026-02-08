@@ -79,9 +79,9 @@ interface AIChatSidebarProps {
   activities: Activity[];
   onCreateProject: (name: string) => void;
   onMoveActivity: (activityId: string, status: 'todo' | 'doing' | 'finished') => void;
-  onCreateActivity: (title: string, projectId?: string) => void;
+  onCreateActivity: (data: { title: string; project_id?: string | null; start_date?: string; duration_days?: number | null; progress?: number | null; notes?: string | null }) => void;
   onDeleteActivity: (activityId: string) => void;
-  onEditActivity: (activityId: string, newTitle: string) => void;
+  onUpdateActivity: (data: { id: string; title?: string; project_id?: string | null; start_date?: string; duration_days?: number | null; progress?: number | null; notes?: string | null }) => void;
 }
 
 const chatTranslations: Record<string, {
@@ -183,7 +183,7 @@ export const AIChatSidebar = ({
   onMoveActivity,
   onCreateActivity,
   onDeleteActivity,
-  onEditActivity,
+  onUpdateActivity,
 }: AIChatSidebarProps) => {
   const { language, setLanguage } = useLanguage();
   const [messages, setMessages] = useState<Message[]>([]);
@@ -296,35 +296,65 @@ export const AIChatSidebar = ({
   }, [messages]);
 
   const handleToolCalls = (toolCalls: ToolCall[]) => {
+    const feedbackMessages: string[] = [];
+
     for (const call of toolCalls) {
       const args = JSON.parse(call.function.arguments);
 
       switch (call.function.name) {
         case 'create_project':
           onCreateProject(args.name);
-          toast.success(`${ct.createdProject} ${args.name}`);
+          feedbackMessages.push(`${ct.createdProject} ${args.name}`);
           break;
         case 'move_activity':
           onMoveActivity(args.activity_id, args.new_status);
-          toast.success(`${ct.movedActivity} ${args.new_status}`);
+          feedbackMessages.push(`${ct.movedActivity} ${args.new_status}`);
           break;
         case 'switch_language':
           setLanguage(args.language as Language);
-          toast.success(`${ct.switchedLanguage} ${args.language}`);
+          feedbackMessages.push(`${ct.switchedLanguage} ${args.language}`);
           break;
         case 'create_activity':
-          onCreateActivity(args.title, args.project_id);
-          toast.success(`${ct.createdActivity} ${args.title}`);
+          onCreateActivity({
+            title: args.title,
+            project_id: args.project_id || null,
+            start_date: args.start_date,
+            duration_days: args.duration_days ?? null,
+            progress: args.progress ?? null,
+            notes: args.notes ?? null,
+          });
+          feedbackMessages.push(`${ct.createdActivity} ${args.title}`);
           break;
         case 'delete_activity':
           onDeleteActivity(args.activity_id);
-          toast.success(ct.deletedActivity);
+          feedbackMessages.push(ct.deletedActivity);
           break;
-        case 'edit_activity':
-          onEditActivity(args.activity_id, args.new_title);
-          toast.success(`${ct.editedActivity} ${args.new_title}`);
+        case 'update_activity': {
+          const { activity_id, ...fields } = args;
+          onUpdateActivity({ id: activity_id, ...fields });
+          feedbackMessages.push(`${ct.editedActivity} (${Object.keys(fields).join(', ')})`);
+          break;
+        }
+        case 'batch_create_activities':
+          if (args.activities && Array.isArray(args.activities)) {
+            for (const act of args.activities) {
+              onCreateActivity({
+                title: act.title,
+                project_id: act.project_id || null,
+                start_date: act.start_date,
+                duration_days: act.duration_days ?? null,
+                progress: act.progress ?? null,
+                notes: act.notes ?? null,
+              });
+            }
+            feedbackMessages.push(`✅ ${args.activities.length} activities created`);
+          }
           break;
       }
+    }
+
+    if (feedbackMessages.length > 0) {
+      toast.success(feedbackMessages.join('\n'));
     }
   };
 

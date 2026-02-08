@@ -74,11 +74,15 @@ export const useActivities = () => {
       project_id,
       start_date,
       duration_days,
+      progress,
+      notes,
     }: {
       title: string;
       project_id?: string | null;
       start_date?: string;
       duration_days?: number | null;
+      progress?: number | null;
+      notes?: string | null;
     }) => {
       if (!user) throw new Error('Not authenticated');
       const { data, error } = await supabase
@@ -88,6 +92,8 @@ export const useActivities = () => {
           project_id: project_id || null,
           start_date: start_date || new Date().toISOString(),
           duration_days: duration_days || null,
+          progress: progress ?? null,
+          notes: notes ?? null,
           user_id: user.id,
           status: 'todo',
         })
