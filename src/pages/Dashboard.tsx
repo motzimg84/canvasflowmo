@@ -1,7 +1,7 @@
 // PROJECT: CanvasFlow Pro
 // MODULE: Dashboard Page
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useCallback } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useProjects } from '@/hooks/useProjects';
@@ -9,7 +9,7 @@ import { useActivities, Activity } from '@/hooks/useActivities';
 import { CanvasColumn } from '@/components/canvas/CanvasColumn';
 import { ActivityModal } from '@/components/canvas/ActivityModal';
 import { GanttChart } from '@/components/gantt/GanttChart';
-import { ProjectsList } from '@/components/projects/ProjectsList';
+import { ProjectsList, PRIVATE_PROJECT_ID } from '@/components/projects/ProjectsList';
 import { AIChatSidebar } from '@/components/chat/AIChatSidebar';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -25,27 +25,37 @@ const Dashboard = () => {
   
   const [activityModalOpen, setActivityModalOpen] = useState(false);
   const [editingActivity, setEditingActivity] = useState<Activity | null>(null);
-  const [activeProjectId, setActiveProjectId] = useState<string | null>(null);
+  const [activeProjectIds, setActiveProjectIds] = useState<Set<string>>(new Set());
 
-  // Memoized filtered activities based on selected project
-  const filteredTodoActivities = useMemo(() => {
-    if (!activeProjectId) return todoActivities;
-    return todoActivities.filter(a => a.project_id === activeProjectId);
-  }, [todoActivities, activeProjectId]);
+  const handleToggleProject = useCallback((projectId: string) => {
+    setActiveProjectIds(prev => {
+      const next = new Set(prev);
+      if (next.has(projectId)) {
+        next.delete(projectId);
+      } else {
+        next.add(projectId);
+      }
+      return next;
+    });
+  }, []);
 
-  const filteredDoingActivities = useMemo(() => {
-    if (!activeProjectId) return doingActivities;
-    return doingActivities.filter(a => a.project_id === activeProjectId);
-  }, [doingActivities, activeProjectId]);
+  const handleClearFilters = useCallback(() => {
+    setActiveProjectIds(new Set());
+  }, []);
 
-  const filteredActivities = useMemo(() => {
-    if (!activeProjectId) return activities;
-    return activities.filter(a => a.project_id === activeProjectId);
-  }, [activities, activeProjectId]);
+  // Multi-select filter logic: show activities matching ANY selected project
+  const filterByProjects = useCallback((list: Activity[]) => {
+    if (activeProjectIds.size === 0) return list;
+    return list.filter(a => {
+      if (activeProjectIds.has(PRIVATE_PROJECT_ID) && !a.project_id) return true;
+      if (a.project_id && activeProjectIds.has(a.project_id)) return true;
+      return false;
+    });
+  }, [activeProjectIds]);
 
-  const handleProjectSelect = (projectId: string | null) => {
-    setActiveProjectId(prev => prev === projectId ? null : projectId);
-  };
+  const filteredTodoActivities = useMemo(() => filterByProjects(todoActivities), [todoActivities, filterByProjects]);
+  const filteredDoingActivities = useMemo(() => filterByProjects(doingActivities), [doingActivities, filterByProjects]);
+  const filteredActivities = useMemo(() => filterByProjects(activities), [activities, filterByProjects]);
 
   const handleMoveActivity = (id: string, status: 'todo' | 'doing' | 'finished') => {
     updateActivity.mutate({ id, status });
@@ -65,13 +75,11 @@ const Dashboard = () => {
     setActivityModalOpen(true);
   };
 
-  // AI-triggered project creation with auto-color
   const handleAICreateProject = (name: string) => {
     const color = getRandomAvailableColor(usedColors) || '#4A90D9';
     createProject.mutate({ name, color });
   };
 
-  // AI-triggered activity creation (full field support)
   const handleAICreateActivity = (data: { title: string; project_id?: string | null; start_date?: string; duration_days?: number | null; progress?: number | null; notes?: string | null }) => {
     createActivity.mutate({
       title: data.title,
@@ -83,7 +91,6 @@ const Dashboard = () => {
     });
   };
 
-  // AI-triggered activity update (universal field access)
   const handleAIUpdateActivity = (data: { id: string; title?: string; project_id?: string | null; start_date?: string; duration_days?: number | null; progress?: number | null; notes?: string | null }) => {
     updateActivity.mutate(data);
   };
@@ -126,8 +133,9 @@ const Dashboard = () => {
             <ProjectsList
               projects={projects}
               usedColors={usedColors}
-              activeProjectId={activeProjectId}
-              onSelectProject={handleProjectSelect}
+              activeProjectIds={activeProjectIds}
+              onToggleProject={handleToggleProject}
+              onClearFilters={handleClearFilters}
               onCreateProject={(data) => createProject.mutate(data)}
               onUpdateProject={(data) => updateProject.mutate(data)}
               onDeleteProject={(id) => deleteProject.mutate(id)}

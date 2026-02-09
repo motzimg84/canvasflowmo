@@ -31,6 +31,8 @@ export interface Translations {
   selectColor: string;
   noProjects: string;
   privateActivity: string;
+  clearFilters: string;
+  projectsSelected: string;
   
   // Activities
   addActivity: string;
@@ -113,6 +115,8 @@ export const translations: Record<Language, Translations> = {
     selectColor: "Select Color",
     noProjects: "No projects yet",
     privateActivity: "Private",
+    clearFilters: "Clear Filters",
+    projectsSelected: "{count} selected",
     addActivity: "Add Activity",
     activityTitle: "Activity Title",
     startDate: "Start Date",
@@ -181,6 +185,8 @@ export const translations: Record<Language, Translations> = {
     selectColor: "Seleccionar Color",
     noProjects: "Sin proyectos aún",
     privateActivity: "Privado",
+    clearFilters: "Limpiar Filtros",
+    projectsSelected: "{count} seleccionados",
     addActivity: "Agregar Actividad",
     activityTitle: "Título de la Actividad",
     startDate: "Fecha de Inicio",
@@ -249,6 +255,8 @@ export const translations: Record<Language, Translations> = {
     selectColor: "Farbe auswählen",
     noProjects: "Noch keine Projekte",
     privateActivity: "Privat",
+    clearFilters: "Filter löschen",
+    projectsSelected: "{count} ausgewählt",
     addActivity: "Aktivität hinzufügen",
     activityTitle: "Aktivitätstitel",
     startDate: "Startdatum",
@@ -317,6 +325,8 @@ export const translations: Record<Language, Translations> = {
     selectColor: "Sélectionner la couleur",
     noProjects: "Pas encore de projets",
     privateActivity: "Privé",
+    clearFilters: "Effacer les filtres",
+    projectsSelected: "{count} sélectionnés",
     addActivity: "Ajouter une activité",
     activityTitle: "Titre de l'activité",
     startDate: "Date de début",
@@ -385,6 +395,8 @@ export const translations: Record<Language, Translations> = {
     selectColor: "Seleziona Colore",
     noProjects: "Nessun progetto ancora",
     privateActivity: "Privato",
+    clearFilters: "Cancella filtri",
+    projectsSelected: "{count} selezionati",
     addActivity: "Aggiungi Attività",
     activityTitle: "Titolo Attività",
     startDate: "Data Inizio",
