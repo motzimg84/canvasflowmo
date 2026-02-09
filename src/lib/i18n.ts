@@ -89,6 +89,9 @@ export interface Translations {
   passwordUpdated: string;
   passwordMismatch: string;
   updatePassword: string;
+  confirmDeleteTitle: string;
+  confirmDeleteMessage: string;
+  confirmDeleteGeneric: string;
 }
 
 export const translations: Record<Language, Translations> = {
@@ -161,6 +164,9 @@ export const translations: Record<Language, Translations> = {
     passwordUpdated: "Password updated successfully!",
     passwordMismatch: "Passwords do not match",
     updatePassword: "Update Password",
+    confirmDeleteTitle: "Are you sure?",
+    confirmDeleteMessage: "This will permanently delete '{name}'. This action cannot be undone.",
+    confirmDeleteGeneric: "This item will be permanently deleted. This action cannot be undone.",
   },
   es: {
     appName: "CanvasFlow Pro",
@@ -231,6 +237,9 @@ export const translations: Record<Language, Translations> = {
     passwordUpdated: "¡Contraseña actualizada exitosamente!",
     passwordMismatch: "Las contraseñas no coinciden",
     updatePassword: "Actualizar Contraseña",
+    confirmDeleteTitle: "¿Estás seguro?",
+    confirmDeleteMessage: "Esto eliminará permanentemente '{name}'. Esta acción no se puede deshacer.",
+    confirmDeleteGeneric: "Este elemento se eliminará permanentemente. Esta acción no se puede deshacer.",
   },
   de: {
     appName: "CanvasFlow Pro",
@@ -301,6 +310,9 @@ export const translations: Record<Language, Translations> = {
     passwordUpdated: "Passwort erfolgreich aktualisiert!",
     passwordMismatch: "Passwörter stimmen nicht überein",
     updatePassword: "Passwort aktualisieren",
+    confirmDeleteTitle: "Sind Sie sicher?",
+    confirmDeleteMessage: "'{name}' wird dauerhaft gelöscht. Diese Aktion kann nicht rückgängig gemacht werden.",
+    confirmDeleteGeneric: "Dieses Element wird dauerhaft gelöscht. Diese Aktion kann nicht rückgängig gemacht werden.",
   },
   fr: {
     appName: "CanvasFlow Pro",
@@ -371,6 +383,9 @@ export const translations: Record<Language, Translations> = {
     passwordUpdated: "Mot de passe mis à jour avec succès!",
     passwordMismatch: "Les mots de passe ne correspondent pas",
     updatePassword: "Mettre à jour le mot de passe",
+    confirmDeleteTitle: "Êtes-vous sûr ?",
+    confirmDeleteMessage: "'{name}' sera définitivement supprimé. Cette action est irréversible.",
+    confirmDeleteGeneric: "Cet élément sera définitivement supprimé. Cette action est irréversible.",
   },
   it: {
     appName: "CanvasFlow Pro",
@@ -441,6 +456,9 @@ export const translations: Record<Language, Translations> = {
     passwordUpdated: "Password aggiornata con successo!",
     passwordMismatch: "Le password non corrispondono",
     updatePassword: "Aggiorna Password",
+    confirmDeleteTitle: "Sei sicuro?",
+    confirmDeleteMessage: "'{name}' verrà eliminato definitivamente. Questa azione non può essere annullata.",
+    confirmDeleteGeneric: "Questo elemento verrà eliminato definitivamente. Questa azione non può essere annullata.",
   },
 };
 

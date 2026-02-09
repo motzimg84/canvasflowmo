@@ -5,6 +5,7 @@ import { useState } from 'react';
 import { Project } from '@/hooks/useProjects';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { ProjectModal } from './ProjectModal';
+import { ConfirmDeleteDialog } from '@/components/ui/confirm-delete-dialog';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -43,6 +44,7 @@ export const ProjectsList = ({
   const { t } = useLanguage();
   const [modalOpen, setModalOpen] = useState(false);
   const [editingProject, setEditingProject] = useState<Project | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<Project | null>(null);
 
   const handleSave = (data: { name: string; color: string }) => {
     if (editingProject) {
@@ -170,7 +172,7 @@ export const ProjectsList = ({
                         {t.edit}
                       </DropdownMenuItem>
                       <DropdownMenuItem 
-                        onClick={(e) => { e.stopPropagation(); onDeleteProject(project.id); }}
+                        onClick={(e) => { e.stopPropagation(); setDeleteTarget(project); }}
                         className="text-destructive"
                       >
                         {t.delete}
@@ -196,6 +198,18 @@ export const ProjectsList = ({
         onSave={handleSave}
         project={editingProject}
         usedColors={usedColors}
+      />
+
+      <ConfirmDeleteDialog
+        open={!!deleteTarget}
+        onOpenChange={(open) => { if (!open) setDeleteTarget(null); }}
+        onConfirm={() => {
+          if (deleteTarget) {
+            onDeleteProject(deleteTarget.id);
+            setDeleteTarget(null);
+          }
+        }}
+        itemName={deleteTarget?.name}
       />
     </>
   );
