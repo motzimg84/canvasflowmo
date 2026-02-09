@@ -7,6 +7,7 @@ import { Project } from '@/hooks/useProjects';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { ConfirmDeleteDialog } from '@/components/ui/confirm-delete-dialog';
 import { 
   DropdownMenu, 
   DropdownMenuContent, 
@@ -37,6 +38,7 @@ export const ActivityCard = ({
 }: ActivityCardProps) => {
   const { t } = useLanguage();
   const [notesOpen, setNotesOpen] = useState(false);
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const hasNotes = activity.notes && activity.notes !== '<p></p>';
 
   // Use shared alarm calculation (single source of truth)
@@ -125,7 +127,7 @@ export const ActivityCard = ({
                   {t.moveToFinished}
                 </DropdownMenuItem>
               )}
-              <DropdownMenuItem onClick={onDelete} className="text-destructive">
+              <DropdownMenuItem onClick={() => setDeleteConfirmOpen(true)} className="text-destructive">
                 {t.delete}
               </DropdownMenuItem>
             </DropdownMenuContent>
@@ -175,6 +177,16 @@ export const ActivityCard = ({
           </Collapsible>
         )}
       </CardContent>
+
+      <ConfirmDeleteDialog
+        open={deleteConfirmOpen}
+        onOpenChange={setDeleteConfirmOpen}
+        onConfirm={() => {
+          setDeleteConfirmOpen(false);
+          onDelete();
+        }}
+        itemName={activity.title}
+      />
     </Card>
   );
 };
