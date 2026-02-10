@@ -16,6 +16,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Language, languageNames } from '@/lib/i18n';
 import { LogOut, Layers, Globe } from 'lucide-react';
 import { getRandomAvailableColor } from '@/lib/colors';
+import { sortActivities } from '@/lib/sorting';
 
 const Dashboard = () => {
   const { signOut, user } = useAuth();
@@ -53,9 +54,10 @@ const Dashboard = () => {
     });
   }, [activeProjectIds]);
 
-  const filteredTodoActivities = useMemo(() => filterByProjects(todoActivities), [todoActivities, filterByProjects]);
-  const filteredDoingActivities = useMemo(() => filterByProjects(doingActivities), [doingActivities, filterByProjects]);
-  const filteredActivities = useMemo(() => filterByProjects(activities), [activities, filterByProjects]);
+  const privateLabel = t.privateActivity;
+  const filteredTodoActivities = useMemo(() => sortActivities(filterByProjects(todoActivities), projects, privateLabel), [todoActivities, filterByProjects, projects, privateLabel]);
+  const filteredDoingActivities = useMemo(() => sortActivities(filterByProjects(doingActivities), projects, privateLabel), [doingActivities, filterByProjects, projects, privateLabel]);
+  const filteredActivities = useMemo(() => sortActivities(filterByProjects(activities), projects, privateLabel), [activities, filterByProjects, projects, privateLabel]);
 
   const handleMoveActivity = (id: string, status: 'todo' | 'doing' | 'finished') => {
     updateActivity.mutate({ id, status });

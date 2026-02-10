@@ -6,6 +6,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { sortProjects } from '@/lib/sorting';
 
 export interface Project {
   id: string;
@@ -36,6 +37,7 @@ export const useProjects = () => {
     enabled: !!user,
   });
 
+  const sortedProjects = sortProjects(projects);
   const usedColors = projects.map(p => p.color);
 
   const createProject = useMutation({
@@ -92,7 +94,7 @@ export const useProjects = () => {
   });
 
   return {
-    projects,
+    projects: sortedProjects,
     isLoading,
     usedColors,
     createProject,

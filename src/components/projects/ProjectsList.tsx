@@ -106,82 +106,101 @@ export const ProjectsList = ({
         </CardHeader>
         <CardContent>
           <div className="space-y-2">
-            {/* Privado (Private) project - always first, non-deletable */}
-            <div
-              onClick={() => onToggleProject(PRIVATE_PROJECT_ID)}
-              className={`flex items-center justify-between p-2 rounded-md transition-colors group cursor-pointer ${
-                activeProjectIds.has(PRIVATE_PROJECT_ID) 
-                  ? 'bg-primary/10 border-l-2 border-primary' 
-                  : 'hover:bg-muted/50'
-              }`}
-            >
-              <div className="flex items-center gap-2">
-                <Checkbox
-                  checked={activeProjectIds.has(PRIVATE_PROJECT_ID)}
-                  onCheckedChange={() => onToggleProject(PRIVATE_PROJECT_ID)}
-                  onClick={(e) => e.stopPropagation()}
-                />
-                <Lock className="h-3 w-3 text-muted-foreground" />
-                <span className={`text-sm font-medium ${activeProjectIds.has(PRIVATE_PROJECT_ID) ? 'text-primary' : ''}`}>
-                  {t.privateActivity}
-                </span>
-              </div>
-            </div>
+            {/* Build a merged list: Privado + user projects, sorted alphabetically */}
+            {(() => {
+              const privateEntry = {
+                id: PRIVATE_PROJECT_ID,
+                name: t.privateActivity,
+                color: '',
+                isPrivate: true,
+              };
+              const allEntries = [
+                privateEntry,
+                ...projects.map(p => ({ id: p.id, name: p.name, color: p.color, isPrivate: false })),
+              ].sort((a, b) => a.name.localeCompare(b.name, undefined, { sensitivity: 'base' }));
 
-            {/* User projects */}
-            {projects.map(project => {
-              const isActive = activeProjectIds.has(project.id);
-              return (
-                <div
-                  key={project.id}
-                  onClick={() => onToggleProject(project.id)}
-                  className={`flex items-center justify-between p-2 rounded-md transition-colors group cursor-pointer ${
-                    isActive 
-                      ? 'bg-primary/10 border-l-2 border-primary' 
-                      : 'hover:bg-muted/50'
-                  }`}
-                >
-                  <div className="flex items-center gap-2">
-                    <Checkbox
-                      checked={isActive}
-                      onCheckedChange={() => onToggleProject(project.id)}
-                      onClick={(e) => e.stopPropagation()}
-                    />
+              return allEntries.map(entry => {
+                const isActive = activeProjectIds.has(entry.id);
+
+                if (entry.isPrivate) {
+                  return (
                     <div
-                      className="w-3 h-3 rounded-full"
-                      style={{ backgroundColor: project.color }}
-                    />
-                    <span className={`text-sm font-medium ${isActive ? 'text-primary' : ''}`}>
-                      {project.name}
-                    </span>
-                  </div>
-                
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button 
-                        variant="ghost" 
-                        size="icon" 
-                        className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
+                      key={entry.id}
+                      onClick={() => onToggleProject(PRIVATE_PROJECT_ID)}
+                      className={`flex items-center justify-between p-2 rounded-md transition-colors group cursor-pointer ${
+                        isActive
+                          ? 'bg-primary/10 border-l-2 border-primary'
+                          : 'hover:bg-muted/50'
+                      }`}
+                    >
+                      <div className="flex items-center gap-2">
+                        <Checkbox
+                          checked={isActive}
+                          onCheckedChange={() => onToggleProject(PRIVATE_PROJECT_ID)}
+                          onClick={(e) => e.stopPropagation()}
+                        />
+                        <Lock className="h-3 w-3 text-muted-foreground" />
+                        <span className={`text-sm font-medium ${isActive ? 'text-primary' : ''}`}>
+                          {t.privateActivity}
+                        </span>
+                      </div>
+                    </div>
+                  );
+                }
+
+                const project = projects.find(p => p.id === entry.id)!;
+                return (
+                  <div
+                    key={project.id}
+                    onClick={() => onToggleProject(project.id)}
+                    className={`flex items-center justify-between p-2 rounded-md transition-colors group cursor-pointer ${
+                      isActive
+                        ? 'bg-primary/10 border-l-2 border-primary'
+                        : 'hover:bg-muted/50'
+                    }`}
+                  >
+                    <div className="flex items-center gap-2">
+                      <Checkbox
+                        checked={isActive}
+                        onCheckedChange={() => onToggleProject(project.id)}
                         onClick={(e) => e.stopPropagation()}
-                      >
-                        <MoreVertical className="h-4 w-4" />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                      <DropdownMenuItem onClick={(e) => { e.stopPropagation(); handleEdit(project); }}>
-                        {t.edit}
-                      </DropdownMenuItem>
-                      <DropdownMenuItem 
-                        onClick={(e) => { e.stopPropagation(); setDeleteTarget(project); }}
-                        className="text-destructive"
-                      >
-                        {t.delete}
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                </div>
-              );
-            })}
+                      />
+                      <div
+                        className="w-3 h-3 rounded-full"
+                        style={{ backgroundColor: project.color }}
+                      />
+                      <span className={`text-sm font-medium ${isActive ? 'text-primary' : ''}`}>
+                        {project.name}
+                      </span>
+                    </div>
+
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          <MoreVertical className="h-4 w-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuItem onClick={(e) => { e.stopPropagation(); handleEdit(project); }}>
+                          {t.edit}
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                          onClick={(e) => { e.stopPropagation(); setDeleteTarget(project); }}
+                          className="text-destructive"
+                        >
+                          {t.delete}
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </div>
+                );
+              });
+            })()}
 
             {projects.length === 0 && (
               <p className="text-sm text-muted-foreground text-center py-2">
