@@ -68,6 +68,10 @@ export interface Translations {
   monthView: string;
   today: string;
   daysOverdue: string;
+  centerToday: string;
+  fullscreen: string;
+  exitFullscreen: string;
+  rotateLandscape: string;
   
   // AI Assistant
   aiAssistant: string;
@@ -147,6 +151,10 @@ export const translations: Record<Language, Translations> = {
     monthView: "Month",
     today: "Today",
     daysOverdue: "{count} day(s) overdue",
+    centerToday: "Center on Today",
+    fullscreen: "Full Screen",
+    exitFullscreen: "Exit Full Screen",
+    rotateLandscape: "Rotate to landscape for a better view",
     aiAssistant: "AI Assistant",
     askAI: "Ask AI",
     aiPlaceholder: "Ask me to create projects, move activities, or change language...",
@@ -220,6 +228,10 @@ export const translations: Record<Language, Translations> = {
     monthView: "Mes",
     today: "Hoy",
     daysOverdue: "{count} día(s) de retraso",
+    centerToday: "Centrar en Hoy",
+    fullscreen: "Pantalla Completa",
+    exitFullscreen: "Salir de Pantalla Completa",
+    rotateLandscape: "Gira a horizontal para una mejor vista",
     aiAssistant: "Asistente IA",
     askAI: "Preguntar a IA",
     aiPlaceholder: "Pídeme crear proyectos, mover actividades o cambiar idioma...",
@@ -293,6 +305,10 @@ export const translations: Record<Language, Translations> = {
     monthView: "Monat",
     today: "Heute",
     daysOverdue: "{count} Tag(e) überfällig",
+    centerToday: "Auf Heute zentrieren",
+    fullscreen: "Vollbild",
+    exitFullscreen: "Vollbild beenden",
+    rotateLandscape: "Zum Querformat drehen für bessere Ansicht",
     aiAssistant: "KI-Assistent",
     askAI: "KI fragen",
     aiPlaceholder: "Bitte mich, Projekte zu erstellen, Aktivitäten zu verschieben oder die Sprache zu ändern...",
@@ -366,6 +382,10 @@ export const translations: Record<Language, Translations> = {
     monthView: "Mois",
     today: "Aujourd'hui",
     daysOverdue: "{count} jour(s) de retard",
+    centerToday: "Centrer sur Aujourd'hui",
+    fullscreen: "Plein Écran",
+    exitFullscreen: "Quitter le Plein Écran",
+    rotateLandscape: "Passez en mode paysage pour une meilleure vue",
     aiAssistant: "Assistant IA",
     askAI: "Demander à l'IA",
     aiPlaceholder: "Demandez-moi de créer des projets, déplacer des activités ou changer de langue...",
@@ -439,6 +459,10 @@ export const translations: Record<Language, Translations> = {
     monthView: "Mese",
     today: "Oggi",
     daysOverdue: "{count} giorno/i di ritardo",
+    centerToday: "Centra su Oggi",
+    fullscreen: "Schermo Intero",
+    exitFullscreen: "Esci da Schermo Intero",
+    rotateLandscape: "Ruota in orizzontale per una vista migliore",
     aiAssistant: "Assistente IA",
     askAI: "Chiedi all'IA",
     aiPlaceholder: "Chiedimi di creare progetti, spostare attività o cambiare lingua...",
