@@ -12,7 +12,7 @@ import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Button } from '@/components/ui/button';
 import { differenceInDays, addDays, format, startOfDay, min, max, startOfWeek, startOfMonth, endOfWeek, endOfMonth, addWeeks, addMonths } from 'date-fns';
-import { BarChart3, Calendar, CalendarDays, CalendarRange, Maximize2, Minimize2, Crosshair, Smartphone } from 'lucide-react';
+import { BarChart3, Calendar, CalendarDays, CalendarRange, Maximize2, Minimize2, Crosshair } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { calculateActivityAlarm } from '@/lib/activity-utils';
 
@@ -80,7 +80,6 @@ export const GanttChart = ({ activities, projects, onEditActivity }: GanttChartP
   const chartContainerRef = useRef<HTMLDivElement>(null);
   const [viewMode, setViewMode] = useState<ViewMode>('day');
   const [isFullscreen, setIsFullscreen] = useState(false);
-  const [showLandscapeHint, setShowLandscapeHint] = useState(false);
 
   const doingActivities = activities.filter(a => a.status === 'doing');
 
@@ -129,38 +128,25 @@ export const GanttChart = ({ activities, projects, onEditActivity }: GanttChartP
     };
   }, [doingActivities, viewMode]);
 
-  // Smooth scroll to center today
+  // Smooth scroll to center today - find the actual scrollable viewport inside ScrollArea
   const scrollToToday = useCallback((smooth = true) => {
-    if (scrollContainerRef.current) {
-      const container = scrollContainerRef.current;
-      const containerWidth = container.clientWidth;
-      const scrollTarget = todayPosition - (containerWidth / 2) + LABEL_WIDTH;
-      container.scrollTo({
-        left: Math.max(0, scrollTarget),
-        behavior: smooth ? 'smooth' : 'auto',
-      });
-    }
+    const scrollEl = scrollContainerRef.current;
+    if (!scrollEl) return;
+    // Radix ScrollArea renders the scrollable viewport as a child div
+    const viewport = scrollEl.querySelector('[data-radix-scroll-area-viewport]') as HTMLElement | null;
+    const target = viewport || scrollEl;
+    const containerWidth = target.clientWidth;
+    const scrollTarget = todayPosition - (containerWidth / 2);
+    target.scrollTo({
+      left: Math.max(0, scrollTarget),
+      behavior: smooth ? 'smooth' : 'auto',
+    });
   }, [todayPosition]);
 
   // Auto-scroll on mount and view change
   useEffect(() => {
     scrollToToday(false);
   }, [scrollToToday, viewMode]);
-
-  // Mobile landscape hint
-  useEffect(() => {
-    if (isMobile) {
-      const isPortrait = window.innerHeight > window.innerWidth;
-      setShowLandscapeHint(isPortrait);
-      const handleOrientation = () => {
-        setShowLandscapeHint(window.innerHeight > window.innerWidth);
-      };
-      window.addEventListener('resize', handleOrientation);
-      return () => window.removeEventListener('resize', handleOrientation);
-    } else {
-      setShowLandscapeHint(false);
-    }
-  }, [isMobile]);
 
   // Fullscreen toggle
   const toggleFullscreen = useCallback(() => {
@@ -250,14 +236,6 @@ export const GanttChart = ({ activities, projects, onEditActivity }: GanttChartP
           </CardHeader>
 
           <CardContent className={cn(isFullscreen && 'flex-1 overflow-hidden')}>
-            {/* Mobile landscape hint */}
-            {showLandscapeHint && doingActivities.length > 0 && (
-              <div className="flex items-center gap-2 mb-3 p-2 rounded-md bg-muted text-muted-foreground text-xs">
-                <Smartphone className="h-4 w-4 rotate-90" />
-                {t.rotateLandscape}
-              </div>
-            )}
-
             {doingActivities.length === 0 ? (
               <div className="flex items-center justify-center h-40 text-muted-foreground">
                 {t.noDoingActivities}
