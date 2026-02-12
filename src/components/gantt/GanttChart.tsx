@@ -7,7 +7,6 @@ import { Project } from '@/hooks/useProjects';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Button } from '@/components/ui/button';
@@ -25,7 +24,9 @@ interface GanttChartProps {
 type ViewMode = 'day' | 'week' | 'month';
 
 const COLUMN_WIDTH = { day: 40, week: 100, month: 120 };
-const LABEL_WIDTH = 140;
+const LABEL_WIDTH = 160;
+const HEADER_HEIGHT = 44;
+const ROW_HEIGHT = 32;
 const BAR_HEIGHT = 24;
 const MIN_BAR_WIDTH_FOR_TEXT = 60;
 
@@ -134,7 +135,7 @@ export const GanttChart = ({ activities, projects, onEditActivity }: GanttChartP
     if (scrollContainerRef.current) {
       const container = scrollContainerRef.current;
       const containerWidth = container.clientWidth;
-      const scrollTarget = todayPosition - (containerWidth / 2) + LABEL_WIDTH;
+      const scrollTarget = LABEL_WIDTH + todayPosition - (containerWidth / 2);
       container.scrollTo({
         left: Math.max(0, scrollTarget),
         behavior: smooth ? 'smooth' : 'auto',
@@ -263,150 +264,157 @@ export const GanttChart = ({ activities, projects, onEditActivity }: GanttChartP
                 {t.noDoingActivities}
               </div>
             ) : (
-              <div className="flex" style={isFullscreen ? { height: 'calc(100% - 2rem)' } : undefined}>
-                {/* Fixed Labels Column */}
-                <div className="flex-shrink-0" style={{ width: LABEL_WIDTH }}>
-                  <div className="h-14 border-b border-border" />
-                  <div className="space-y-1 pt-2">
-                    {doingActivities.map(activity => (
-                      <div key={activity.id} className="h-8 flex items-center">
-                        <span className="text-sm truncate pr-2 text-foreground font-medium">
-                          {activity.title}
-                        </span>
+              <div
+                ref={scrollContainerRef}
+                className="overflow-auto relative"
+                style={{
+                  maxHeight: isFullscreen ? 'calc(100vh - 10rem)' : '400px',
+                  touchAction: 'pan-x pan-y pinch-zoom',
+                }}
+              >
+                {/* Full grid: labels column + timeline columns */}
+                <div style={{ width: LABEL_WIDTH + totalWidth, minHeight: HEADER_HEIGHT + doingActivities.length * ROW_HEIGHT + 16 }}>
+
+                  {/* ── Sticky Date Header Row ── */}
+                  <div className="flex sticky top-0 z-30 bg-card" style={{ height: HEADER_HEIGHT }}>
+                    {/* Top-left corner cell: sticky both ways */}
+                    <div
+                      className="sticky left-0 z-40 bg-card border-b border-r border-border"
+                      style={{ width: LABEL_WIDTH, minWidth: LABEL_WIDTH, height: HEADER_HEIGHT }}
+                    />
+                    {/* Date column headers */}
+                    {columns.map((col, i) => (
+                      <div
+                        key={i}
+                        className="flex-shrink-0 text-center border-b border-r border-border/50 bg-card flex flex-col justify-center"
+                        style={{ width: COLUMN_WIDTH[viewMode], height: HEADER_HEIGHT }}
+                      >
+                        <div className="text-xs font-medium text-foreground">{col.label}</div>
+                        {col.subLabel && (
+                          <div className="text-[10px] text-muted-foreground">{col.subLabel}</div>
+                        )}
                       </div>
                     ))}
                   </div>
-                </div>
 
-                {/* Scrollable Timeline */}
-                <ScrollArea
-                  className={cn('flex-1 overflow-x-auto', isFullscreen && 'h-full')}
-                  ref={scrollContainerRef}
-                  style={{ touchAction: 'pan-x pan-y pinch-zoom' }}
-                >
-                  <div style={{ width: totalWidth, minWidth: '100%' }}>
-                    {/* Date Headers */}
-                    <div className="flex border-b border-border">
-                      {columns.map((col, i) => (
-                        <div
-                          key={i}
-                          className="flex-shrink-0 text-center border-r border-border/50"
-                          style={{ width: COLUMN_WIDTH[viewMode] }}
-                        >
-                          <div className="text-xs font-medium text-foreground py-1">{col.label}</div>
-                          {col.subLabel && (
-                            <div className="text-[10px] text-muted-foreground pb-1">{col.subLabel}</div>
-                          )}
-                        </div>
-                      ))}
+                  {/* ── Body: sticky labels + scrollable bars ── */}
+                  <div className="relative" style={{ width: LABEL_WIDTH + totalWidth }}>
+                    {/* Grid background columns */}
+                    <div className="absolute flex pointer-events-none" style={{ left: LABEL_WIDTH, top: 0, bottom: 0 }}>
+                      {columns.map((col, i) => {
+                        const isToday = viewMode === 'day' &&
+                          format(col.date, 'yyyy-MM-dd') === format(new Date(), 'yyyy-MM-dd');
+                        return (
+                          <div
+                            key={i}
+                            className={cn(
+                              "flex-shrink-0 h-full border-r border-border/30",
+                              isToday && "bg-primary/5"
+                            )}
+                            style={{ width: COLUMN_WIDTH[viewMode] }}
+                          />
+                        );
+                      })}
                     </div>
 
-                    {/* Grid and Bars */}
-                    <div className="relative">
-                      {/* Grid columns */}
-                      <div className="absolute inset-0 flex pointer-events-none">
-                        {columns.map((col, i) => {
-                          const isToday = viewMode === 'day' &&
-                            format(col.date, 'yyyy-MM-dd') === format(new Date(), 'yyyy-MM-dd');
-                          return (
+                    {/* Today marker line */}
+                    <div
+                      className="absolute top-0 bottom-0 w-0.5 bg-destructive z-20"
+                      style={{ left: LABEL_WIDTH + todayPosition }}
+                    >
+                      <span className="absolute -top-5 left-1/2 -translate-x-1/2 text-[10px] font-semibold text-destructive whitespace-nowrap bg-card px-1 rounded">
+                        {t.today}
+                      </span>
+                    </div>
+
+                    {/* Activity rows */}
+                    <div className="pt-2">
+                      {doingActivities.map(activity => {
+                        const activityStart = startOfDay(new Date(activity.start_date));
+                        const alarmInfo = calculateActivityAlarm(activity);
+                        const isOverdue = alarmInfo.isOverdue;
+                        const daysOverdue = alarmInfo.daysOverdue;
+                        const visualEnd = alarmInfo.visualEndDate;
+
+                        const barLeft = calculatePosition(activityStart, startDate, viewMode);
+                        const barWidth = calculateWidth(activityStart, visualEnd, viewMode);
+                        const progressPercent = activity.progress || 0;
+                        const progressWidth = (progressPercent / 100) * barWidth;
+                        const showTextInside = barWidth >= MIN_BAR_WIDTH_FOR_TEXT;
+
+                        return (
+                          <div key={activity.id} className="relative" style={{ height: ROW_HEIGHT }}>
+                            {/* Sticky label */}
                             <div
-                              key={i}
-                              className={cn(
-                                "flex-shrink-0 h-full border-r border-border/30",
-                                isToday && "bg-primary/5"
-                              )}
-                              style={{ width: COLUMN_WIDTH[viewMode] }}
-                            />
-                          );
-                        })}
-                      </div>
-
-                      {/* Today marker */}
-                      <div
-                        className="absolute top-0 bottom-0 w-0.5 bg-destructive z-20"
-                        style={{ left: todayPosition }}
-                      >
-                        <span className="absolute -top-6 left-1/2 -translate-x-1/2 text-[10px] font-semibold text-destructive whitespace-nowrap bg-background px-1 rounded">
-                          {t.today}
-                        </span>
-                      </div>
-
-                      {/* Activity Bars */}
-                      <div className="relative space-y-1 pt-2">
-                        {doingActivities.map(activity => {
-                          const activityStart = startOfDay(new Date(activity.start_date));
-                          const alarmInfo = calculateActivityAlarm(activity);
-                          const isOverdue = alarmInfo.isOverdue;
-                          const daysOverdue = alarmInfo.daysOverdue;
-                          const visualEnd = alarmInfo.visualEndDate;
-
-                          const barLeft = calculatePosition(activityStart, startDate, viewMode);
-                          const barWidth = calculateWidth(activityStart, visualEnd, viewMode);
-                          const progressPercent = activity.progress || 0;
-                          const progressWidth = (progressPercent / 100) * barWidth;
-                          const showTextInside = barWidth >= MIN_BAR_WIDTH_FOR_TEXT;
-
-                          const barElement = (
-                            <div
-                              className={cn(
-                                'gantt-bar absolute top-1 rounded-md cursor-pointer transition-all hover:ring-2 hover:ring-primary/50 hover:ring-offset-1 overflow-hidden',
-                                isOverdue && 'critical-alarm'
-                              )}
-                              style={{
-                                left: barLeft,
-                                width: barWidth,
-                                height: BAR_HEIGHT,
-                                backgroundColor: getProjectColor(activity.project_id),
-                              }}
-                              onClick={() => onEditActivity?.(activity)}
+                              className="absolute top-0 left-0 sticky z-30 bg-card flex items-center border-r border-border/50"
+                              style={{ width: LABEL_WIDTH, height: ROW_HEIGHT, left: 0, position: 'sticky' }}
                             >
-                              <div
-                                className="absolute inset-y-0 left-0 rounded-l-md transition-all"
-                                style={{ width: progressWidth, backgroundColor: 'rgba(255, 255, 255, 0.35)' }}
-                              />
-                              <div
-                                className="absolute inset-y-1 left-1 rounded transition-all"
-                                style={{ width: Math.max(0, progressWidth - 8), backgroundColor: 'rgba(0, 0, 0, 0.2)' }}
-                              />
-                              {showTextInside && (
-                                <span className="absolute inset-0 flex items-center px-2 text-xs font-medium text-white truncate z-10">
-                                  {progressPercent}%
-                                </span>
-                              )}
+                              <span className="text-sm truncate px-2 text-foreground font-medium">
+                                {activity.title}
+                              </span>
                             </div>
-                          );
 
-                          return (
-                            <div key={activity.id} className="relative h-8">
-                              <Tooltip>
-                                <TooltipTrigger asChild>{barElement}</TooltipTrigger>
-                                <TooltipContent
-                                  side="top"
-                                  className={cn(isOverdue && 'bg-destructive text-destructive-foreground border-destructive')}
-                                >
-                                  <p className="font-medium">{activity.title}</p>
-                                  {isOverdue && (
-                                    <p className="text-sm">{t.daysOverdue.replace('{count}', String(daysOverdue))}</p>
+                            {/* Bar */}
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <div
+                                  className={cn(
+                                    'gantt-bar absolute rounded-md cursor-pointer transition-all hover:ring-2 hover:ring-primary/50 hover:ring-offset-1 overflow-hidden',
+                                    isOverdue && 'critical-alarm'
                                   )}
-                                </TooltipContent>
-                              </Tooltip>
-
-                              {!showTextInside && (
-                                <span
-                                  className="absolute top-1 text-xs font-medium text-foreground truncate max-w-[100px]"
-                                  style={{ left: barLeft + barWidth + 4, lineHeight: `${BAR_HEIGHT}px` }}
+                                  style={{
+                                    left: LABEL_WIDTH + barLeft,
+                                    top: (ROW_HEIGHT - BAR_HEIGHT) / 2,
+                                    width: barWidth,
+                                    height: BAR_HEIGHT,
+                                    backgroundColor: getProjectColor(activity.project_id),
+                                  }}
+                                  onClick={() => onEditActivity?.(activity)}
                                 >
-                                  {activity.title}
-                                </span>
-                              )}
-                            </div>
-                          );
-                        })}
-                      </div>
+                                  <div
+                                    className="absolute inset-y-0 left-0 rounded-l-md transition-all"
+                                    style={{ width: progressWidth, backgroundColor: 'rgba(255, 255, 255, 0.35)' }}
+                                  />
+                                  <div
+                                    className="absolute inset-y-1 left-1 rounded transition-all"
+                                    style={{ width: Math.max(0, progressWidth - 8), backgroundColor: 'rgba(0, 0, 0, 0.2)' }}
+                                  />
+                                  {showTextInside && (
+                                    <span className="absolute inset-0 flex items-center px-2 text-xs font-medium text-white truncate z-10">
+                                      {progressPercent}%
+                                    </span>
+                                  )}
+                                </div>
+                              </TooltipTrigger>
+                              <TooltipContent
+                                side="top"
+                                className={cn(isOverdue && 'bg-destructive text-destructive-foreground border-destructive')}
+                              >
+                                <p className="font-medium">{activity.title}</p>
+                                {isOverdue && (
+                                  <p className="text-sm">{t.daysOverdue.replace('{count}', String(daysOverdue))}</p>
+                                )}
+                              </TooltipContent>
+                            </Tooltip>
+
+                            {!showTextInside && (
+                              <span
+                                className="absolute text-xs font-medium text-foreground truncate max-w-[100px]"
+                                style={{
+                                  left: LABEL_WIDTH + barLeft + barWidth + 4,
+                                  top: (ROW_HEIGHT - BAR_HEIGHT) / 2,
+                                  lineHeight: `${BAR_HEIGHT}px`,
+                                }}
+                              >
+                                {activity.title}
+                              </span>
+                            )}
+                          </div>
+                        );
+                      })}
                     </div>
                   </div>
-                  <ScrollBar orientation="horizontal" />
-                </ScrollArea>
+                </div>
               </div>
             )}
           </CardContent>
