@@ -11,7 +11,7 @@ import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Button } from '@/components/ui/button';
 import { differenceInDays, addDays, format, startOfDay, min, max, startOfWeek, startOfMonth, endOfWeek, endOfMonth, addWeeks, addMonths } from 'date-fns';
-import { BarChart3, Calendar, CalendarDays, CalendarRange, Maximize2, Minimize2, Crosshair, Smartphone } from 'lucide-react';
+import { BarChart3, Calendar, CalendarDays, CalendarRange, Maximize2, Minimize2, Crosshair } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { calculateActivityAlarm } from '@/lib/activity-utils';
 
@@ -81,7 +81,7 @@ export const GanttChart = ({ activities, projects, onEditActivity }: GanttChartP
   const chartContainerRef = useRef<HTMLDivElement>(null);
   const [viewMode, setViewMode] = useState<ViewMode>('day');
   const [isFullscreen, setIsFullscreen] = useState(false);
-  const [showLandscapeHint, setShowLandscapeHint] = useState(false);
+  
 
   const doingActivities = activities.filter(a => a.status === 'doing');
 
@@ -148,36 +148,22 @@ export const GanttChart = ({ activities, projects, onEditActivity }: GanttChartP
     scrollToToday(false);
   }, [scrollToToday, viewMode]);
 
-  // Mobile landscape hint
-  useEffect(() => {
-    if (isMobile) {
-      const isPortrait = window.innerHeight > window.innerWidth;
-      setShowLandscapeHint(isPortrait);
-      const handleOrientation = () => {
-        setShowLandscapeHint(window.innerHeight > window.innerWidth);
-      };
-      window.addEventListener('resize', handleOrientation);
-      return () => window.removeEventListener('resize', handleOrientation);
-    } else {
-      setShowLandscapeHint(false);
-    }
-  }, [isMobile]);
+
 
   // Fullscreen toggle
   const toggleFullscreen = useCallback(() => {
-    if (!chartContainerRef.current) return;
-    if (!isFullscreen) {
-      chartContainerRef.current.requestFullscreen?.().catch(() => {});
-    } else {
-      document.exitFullscreen?.().catch(() => {});
-    }
-  }, [isFullscreen]);
-
-  useEffect(() => {
-    const handleFsChange = () => setIsFullscreen(!!document.fullscreenElement);
-    document.addEventListener('fullscreenchange', handleFsChange);
-    return () => document.removeEventListener('fullscreenchange', handleFsChange);
+    setIsFullscreen(prev => !prev);
   }, []);
+
+  // Lock body scroll when CSS-fullscreen is active
+  useEffect(() => {
+    if (isFullscreen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+    return () => { document.body.style.overflow = ''; };
+  }, [isFullscreen]);
 
   // Re-center after fullscreen change
   useEffect(() => {
@@ -199,7 +185,7 @@ export const GanttChart = ({ activities, projects, onEditActivity }: GanttChartP
         ref={chartContainerRef}
         className={cn(
           'transition-all duration-300',
-          isFullscreen && 'bg-background p-4 flex flex-col h-screen'
+          isFullscreen && 'fixed inset-0 z-50 bg-background p-4 flex flex-col'
         )}
       >
         <Card className={cn('h-full', isFullscreen && 'flex-1 flex flex-col')}>
@@ -251,13 +237,7 @@ export const GanttChart = ({ activities, projects, onEditActivity }: GanttChartP
           </CardHeader>
 
           <CardContent className={cn(isFullscreen && 'flex-1 overflow-hidden')}>
-            {/* Mobile landscape hint */}
-            {showLandscapeHint && doingActivities.length > 0 && (
-              <div className="flex items-center gap-2 mb-3 p-2 rounded-md bg-muted text-muted-foreground text-xs">
-                <Smartphone className="h-4 w-4 rotate-90" />
-                {t.rotateLandscape}
-              </div>
-            )}
+
 
             {doingActivities.length === 0 ? (
               <div className="flex items-center justify-center h-40 text-muted-foreground">
