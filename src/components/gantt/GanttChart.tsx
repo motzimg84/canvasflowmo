@@ -77,7 +77,7 @@ export const GanttChart = ({ activities, projects, onEditActivity }: GanttChartP
   const { t } = useLanguage();
   const isMobile = useIsMobile();
   const scrollContainerRef = useRef<HTMLDivElement>(null);
-  const labelsRef = useRef<HTMLDivElement>(null);
+  const chartContainerRef = useRef<HTMLDivElement>(null);
   const [viewMode, setViewMode] = useState<ViewMode>('day');
   const [isFullscreen, setIsFullscreen] = useState(false);
 
@@ -148,9 +148,20 @@ export const GanttChart = ({ activities, projects, onEditActivity }: GanttChartP
     scrollToToday(false);
   }, [scrollToToday, viewMode]);
 
-  // CSS-based fullscreen toggle (avoids stacking context issues with modals)
+  // Fullscreen toggle
   const toggleFullscreen = useCallback(() => {
-    setIsFullscreen(prev => !prev);
+    if (!chartContainerRef.current) return;
+    if (!isFullscreen) {
+      chartContainerRef.current.requestFullscreen?.().catch(() => {});
+    } else {
+      document.exitFullscreen?.().catch(() => {});
+    }
+  }, [isFullscreen]);
+
+  useEffect(() => {
+    const handleFsChange = () => setIsFullscreen(!!document.fullscreenElement);
+    document.addEventListener('fullscreenchange', handleFsChange);
+    return () => document.removeEventListener('fullscreenchange', handleFsChange);
   }, []);
 
   // Re-center after fullscreen change
@@ -158,22 +169,6 @@ export const GanttChart = ({ activities, projects, onEditActivity }: GanttChartP
     const timer = setTimeout(() => scrollToToday(true), 150);
     return () => clearTimeout(timer);
   }, [isFullscreen, scrollToToday]);
-
-  // Synchronized vertical scrolling between labels and chart
-  useEffect(() => {
-    const scrollEl = scrollContainerRef.current;
-    if (!scrollEl) return;
-    const viewport = scrollEl.querySelector('[data-radix-scroll-area-viewport]') as HTMLElement | null;
-    const target = viewport || scrollEl;
-    const labels = labelsRef.current;
-    if (!target || !labels) return;
-
-    const handleScroll = () => {
-      labels.scrollTop = target.scrollTop;
-    };
-    target.addEventListener('scroll', handleScroll, { passive: true });
-    return () => target.removeEventListener('scroll', handleScroll);
-  }, [doingActivities.length]);
 
   const getProjectColor = (projectId: string | null) => {
     if (!projectId) return 'hsl(var(--muted))';
@@ -186,9 +181,10 @@ export const GanttChart = ({ activities, projects, onEditActivity }: GanttChartP
   return (
     <TooltipProvider>
       <div
+        ref={chartContainerRef}
         className={cn(
           'transition-all duration-300',
-          isFullscreen && 'fixed inset-0 z-40 bg-background p-4 flex flex-col'
+          isFullscreen && 'bg-background p-4 flex flex-col h-screen'
         )}
       >
         <Card className={cn('h-full', isFullscreen && 'flex-1 flex flex-col')}>
@@ -246,12 +242,8 @@ export const GanttChart = ({ activities, projects, onEditActivity }: GanttChartP
               </div>
             ) : (
               <div className="flex" style={isFullscreen ? { height: 'calc(100% - 2rem)' } : undefined}>
-                {/* Fixed Labels Column - synced vertical scroll */}
-                <div
-                  ref={labelsRef}
-                  className="flex-shrink-0 overflow-hidden"
-                  style={{ width: LABEL_WIDTH }}
-                >
+                {/* Fixed Labels Column */}
+                <div className="flex-shrink-0" style={{ width: LABEL_WIDTH }}>
                   <div className="h-14 border-b border-border" />
                   <div className="space-y-1 pt-2">
                     {doingActivities.map(activity => (
