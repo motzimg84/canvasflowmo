@@ -332,11 +332,12 @@ export const GanttChart = ({ activities, projects, onEditActivity }: GanttChartP
                           <div key={activity.id} className="relative" style={{ height: ROW_HEIGHT }}>
                             {/* Sticky label */}
                             <div
-                              className="absolute top-0 left-0 sticky z-30 bg-card flex items-center border-r border-border/50"
+                              className="absolute top-0 left-0 sticky z-30 bg-card flex items-center border-r border-border/50 overflow-hidden"
                               style={{ width: LABEL_WIDTH, height: ROW_HEIGHT, left: 0, position: 'sticky' }}
                             >
-                              <span className="text-sm truncate px-2 text-foreground font-medium">
-                                {activity.title}
+                              <span className="inline-block animate-marquee text-sm px-2 text-foreground font-medium whitespace-nowrap"
+                                style={{ animationDuration: `${Math.max(5, (getProjectName(activity.project_id).length + activity.title.length) * 0.3)}s` }}>
+                                {getProjectName(activity.project_id)}{activity.project_id ? ' - ' : ''}{activity.title}
                               </span>
                             </div>
 
