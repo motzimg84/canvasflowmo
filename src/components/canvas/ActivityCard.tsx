@@ -2,6 +2,7 @@
 // MODULE: Activity Card Component
 
 import { useState } from 'react';
+import { Progress } from '@/components/ui/progress';
 import { Activity } from '@/hooks/useActivities';
 import { Project } from '@/hooks/useProjects';
 import { useLanguage } from '@/contexts/LanguageContext';
@@ -154,6 +155,16 @@ export const ActivityCard = ({
           )}>
             <AlertTriangle className="h-3 w-3" />
             {daysInfo.label} (+{daysInfo.days} {t.daysLabel})
+          </div>
+        )}
+        
+        {/* Progress bar for doing activities */}
+        {activity.status === 'doing' && (
+          <div className="mt-2 flex items-center gap-2">
+            <Progress value={activity.progress || 0} className="h-2 flex-1" />
+            <span className="text-xs font-medium text-muted-foreground min-w-[32px] text-right">
+              {activity.progress || 0}%
+            </span>
           </div>
         )}
         

@@ -198,3 +198,22 @@ All colors MUST be HSL.
   filter: brightness(1.1);
   transform: scaleY(1.1);
 }
+
+/* Gantt marquee scrolling labels */
+.gantt-marquee-container {
+  position: relative;
+}
+
+.gantt-marquee-text {
+  display: inline-block;
+  padding-right: 2rem;
+}
+
+.gantt-marquee-container:hover .gantt-marquee-text {
+  animation: gantt-scroll 4s linear infinite;
+}
+
+@keyframes gantt-scroll {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-100%); }
+}
