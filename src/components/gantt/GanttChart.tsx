@@ -322,16 +322,21 @@ export const GanttChart = ({ activities, projects, onEditActivity }: GanttChartP
                         const progressWidth = (progressPercent / 100) * barWidth;
                         const showTextInside = barWidth >= MIN_BAR_WIDTH_FOR_TEXT;
 
+                        const projectName = projects.find(p => p.id === activity.project_id)?.name;
+                        const fullLabel = projectName ? `${projectName} - ${activity.title}` : activity.title;
+
                         return (
                           <div key={activity.id} className="relative" style={{ height: ROW_HEIGHT }}>
-                            {/* Sticky label */}
+                            {/* Sticky label with marquee */}
                             <div
-                              className="absolute top-0 left-0 sticky z-30 bg-card flex items-center border-r border-border/50"
+                              className="absolute top-0 left-0 sticky z-30 bg-card flex items-center border-r border-border/50 overflow-hidden group/label"
                               style={{ width: LABEL_WIDTH, height: ROW_HEIGHT, left: 0, position: 'sticky' }}
                             >
-                              <span className="text-sm truncate px-2 text-foreground font-medium">
-                                {activity.title}
-                              </span>
+                              <div className="relative w-full overflow-hidden px-2">
+                                <span className="text-sm text-foreground font-medium whitespace-nowrap inline-block group-hover/label:animate-marquee">
+                                  {fullLabel}
+                                </span>
+                              </div>
                             </div>
 
                             {/* Bar */}
@@ -359,36 +364,21 @@ export const GanttChart = ({ activities, projects, onEditActivity }: GanttChartP
                                     className="absolute inset-y-1 left-1 rounded transition-all"
                                     style={{ width: Math.max(0, progressWidth - 8), backgroundColor: 'rgba(0, 0, 0, 0.2)' }}
                                   />
-                                  {showTextInside && (
-                                    <span className="absolute inset-0 flex items-center px-2 text-xs font-medium text-white truncate z-10">
-                                      {progressPercent}%
-                                    </span>
-                                  )}
+                                  <span className="absolute inset-0 flex items-center justify-center text-xs font-medium text-white z-10">
+                                    {progressPercent}%
+                                  </span>
                                 </div>
                               </TooltipTrigger>
                               <TooltipContent
                                 side="top"
                                 className={cn(isOverdue && 'bg-destructive text-destructive-foreground border-destructive')}
                               >
-                                <p className="font-medium">{activity.title}</p>
+                                <p className="font-medium">{fullLabel}</p>
                                 {isOverdue && (
                                   <p className="text-sm">{t.daysOverdue.replace('{count}', String(daysOverdue))}</p>
                                 )}
                               </TooltipContent>
                             </Tooltip>
-
-                            {!showTextInside && (
-                              <span
-                                className="absolute text-xs font-medium text-foreground truncate max-w-[100px]"
-                                style={{
-                                  left: LABEL_WIDTH + barLeft + barWidth + 4,
-                                  top: (ROW_HEIGHT - BAR_HEIGHT) / 2,
-                                  lineHeight: `${BAR_HEIGHT}px`,
-                                }}
-                              >
-                                {activity.title}
-                              </span>
-                            )}
                           </div>
                         );
                       })}
