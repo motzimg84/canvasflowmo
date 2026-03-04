@@ -332,12 +332,11 @@ export const GanttChart = ({ activities, projects, onEditActivity }: GanttChartP
                           <div key={activity.id} className="relative" style={{ height: ROW_HEIGHT }}>
                             {/* Sticky label */}
                             <div
-                              className="absolute top-0 left-0 sticky z-30 bg-card flex items-center border-r border-border/50 overflow-hidden"
+                              className="absolute top-0 left-0 sticky z-30 bg-card flex items-center border-r border-border/50"
                               style={{ width: LABEL_WIDTH, height: ROW_HEIGHT, left: 0, position: 'sticky' }}
                             >
-                              <span className="inline-block animate-marquee text-sm px-2 text-foreground font-medium whitespace-nowrap"
-                                style={{ animationDuration: `${Math.max(5, (getProjectName(activity.project_id).length + activity.title.length) * 0.3)}s` }}>
-                                {getProjectName(activity.project_id)}{activity.project_id ? ' - ' : ''}{activity.title}
+                              <span className="text-sm truncate px-2 text-foreground font-medium">
+                                {activity.title}
                               </span>
                             </div>
 
@@ -367,8 +366,10 @@ export const GanttChart = ({ activities, projects, onEditActivity }: GanttChartP
                                     style={{ width: Math.max(0, progressWidth - 8), backgroundColor: 'rgba(0, 0, 0, 0.2)' }}
                                   />
                                   {showTextInside && (
-                                    <span className="absolute inset-0 flex items-center justify-center text-xs font-medium text-white z-10">
-                                      {progressPercent}%
+                                    <span className="absolute inset-0 flex items-center px-2 text-xs font-medium text-white z-10 overflow-hidden whitespace-nowrap">
+                                      <span className={cn("inline-block", barWidth < 200 && "animate-marquee")} style={barWidth < 200 ? { animationDuration: `${Math.max(4, (getProjectName(activity.project_id).length + activity.title.length) * 0.25)}s` } : undefined}>
+                                        {getProjectName(activity.project_id)}{activity.project_id ? ' - ' : ''}{activity.title} · {progressPercent}%
+                                      </span>
                                     </span>
                                   )}
                                 </div>
