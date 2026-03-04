@@ -329,11 +329,11 @@ export const GanttChart = ({ activities, projects, onEditActivity }: GanttChartP
                           <div key={activity.id} className="relative" style={{ height: ROW_HEIGHT }}>
                             {/* Sticky label with marquee */}
                             <div
-                              className="absolute top-0 left-0 sticky z-30 bg-card flex items-center border-r border-border/50 overflow-hidden group/label"
+                              className="absolute top-0 left-0 sticky z-30 bg-card flex items-center border-r border-border/50 overflow-hidden"
                               style={{ width: LABEL_WIDTH, height: ROW_HEIGHT, left: 0, position: 'sticky' }}
                             >
-                              <div className="relative w-full overflow-hidden px-2">
-                                <span className="text-sm text-foreground font-medium whitespace-nowrap inline-block group-hover/label:animate-marquee">
+                              <div className="gantt-marquee-container relative w-full overflow-hidden px-2">
+                                <span className="gantt-marquee-text text-sm text-foreground font-medium whitespace-nowrap inline-block">
                                   {fullLabel}
                                 </span>
                               </div>
