@@ -146,6 +146,25 @@ export const ActivityCard = ({
             </div>
           )}
         </div>
+
+        {/* Progress bar for doing activities */}
+        {activity.status === 'doing' && (
+          <div className="mt-2">
+            <div className="flex items-center justify-between text-xs mb-1">
+              <span className="text-muted-foreground">{t.progress}</span>
+              <span className="font-medium text-foreground">{activity.progress || 0}%</span>
+            </div>
+            <div className="h-1.5 w-full rounded-full bg-muted/40 overflow-hidden">
+              <div
+                className="h-full rounded-full transition-all duration-300"
+                style={{
+                  width: `${activity.progress || 0}%`,
+                  backgroundColor: project?.color || 'hsl(var(--primary))',
+                }}
+              />
+            </div>
+          </div>
+        )}
         
         {daysInfo && (
           <div className={cn(
