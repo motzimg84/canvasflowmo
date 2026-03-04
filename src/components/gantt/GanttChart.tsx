@@ -367,10 +367,8 @@ export const GanttChart = ({ activities, projects, onEditActivity }: GanttChartP
                                     style={{ width: Math.max(0, progressWidth - 8), backgroundColor: 'rgba(0, 0, 0, 0.2)' }}
                                   />
                                   {showTextInside && (
-                                    <span className="absolute inset-0 flex items-center px-2 text-xs font-medium text-white z-10 overflow-hidden whitespace-nowrap">
-                                      <span className={cn("inline-block", barWidth < 200 && "animate-marquee")} style={barWidth < 200 ? { animationDuration: `${Math.max(4, (getProjectName(activity.project_id).length + activity.title.length) * 0.25)}s` } : undefined}>
-                                        {getProjectName(activity.project_id)}{activity.project_id ? ' - ' : ''}{activity.title} · {progressPercent}%
-                                      </span>
+                                    <span className="absolute inset-0 flex items-center justify-center text-xs font-medium text-white z-10">
+                                      {progressPercent}%
                                     </span>
                                   )}
                                 </div>
